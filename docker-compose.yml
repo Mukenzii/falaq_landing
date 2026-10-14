@@ -1,0 +1,56 @@
+# Falaq Nashr: nginx (site + admin) → Node API (+ headless Chromium for Uzum) → Postgres.
+# Start:  cp .env.example .env && docker compose up -d --build
+# Open:   http://localhost:8080   (admin: http://localhost:8080/admin/)
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: falaq
+      POSTGRES_USER: falaq
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-falaq}
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U falaq -d falaq"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  backend:
+    build: ./backend
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgres://falaq:${POSTGRES_PASSWORD:-falaq}@db:5432/falaq
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:?Set ADMIN_PASSWORD in .env}
+      SESSION_SECRET: ${SESSION_SECRET:?Set SESSION_SECRET in .env}
+      SYNC_ON_START: ${SYNC_ON_START:-1}
+    shm_size: 512mb # Chromium needs more than Docker's default 64 MB
+    depends_on:
+      db:
+        condition: service_healthy
+
+  frontend:
+    build: ./frontend
+    restart: unless-stopped
+    ports:
+      - "${PORT:-8080}:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+
+  # Database browser for development: http://localhost:8081 (server: db, user: falaq).
+  # Started only with:  docker compose --profile tools up -d
+  adminer:
+    image: adminer:4
+    profiles: ["tools"]
+    ports:
+      - "8081:8080"
+    environment:
+      ADMINER_DEFAULT_SERVER: db
+    depends_on:
+      - db
+
+volumes:
+  db-data:

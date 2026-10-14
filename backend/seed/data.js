@@ -1,16 +1,13 @@
-/* Falaq Nashr site content: books, news, contacts and external links.
-
-   Uzum prices: `npm run sync:uzum` matches books to Uzum products by title.
-   If a book is not matched, set its Uzum product ID by hand: { slug: "...", uzumId: 1234567, ... }
-   (the sync report lists the IDs). */
+/* Initial site content: books, news, contacts and external links.
+   The backend loads this into the database on first start (src/seed.js); after that,
+   content is edited in the admin panel (/admin/). */
 
 window.FALAQ = {
   links: {
     telegram: "https://t.me/falaqnashr",
     instagram: "https://www.instagram.com/falaqnashr",
     youtube: "https://www.youtube.com/@FalaqNashrRasmiy",
-    // TODO: replace with the official Uzum Market shop URL
-    uzum: "https://uzum.uz/uz/search?query=falaq%20nashr",
+    uzum: "https://uzum.uz/uz/shop/falaqnashr",
     // TODO: replace with the Telegram bot URL
     telegramBot: "https://t.me/falaqnashr",
     googlePlay: "https://play.google.com/store/search?q=falaq%20nashr&c=apps",

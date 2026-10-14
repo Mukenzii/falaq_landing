@@ -1,8 +1,30 @@
-/* Falaq Nashr website: a small single-page app with hash routing. */
-(function () {
-  const D = window.FALAQ;
-  const L = D.links;
+/* Falaq Nashr website: a small single-page app with hash routing.
+   Content comes from the API (/api/site); prices and stock are synced from Uzum Market in the admin panel. */
+(async function () {
   const $app = document.getElementById("app");
+
+  // Every string is HTML-escaped once on load, so templates below can interpolate freely.
+  const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+  const escAll = (v) =>
+    typeof v === "string" ? esc(v)
+      : Array.isArray(v) ? v.map(escAll)
+      : v && typeof v === "object" ? Object.fromEntries(Object.entries(v).map(([k, x]) => [k, escAll(x)]))
+      : v;
+  const getJSON = async (url) => {
+    const r = await fetch(url, { headers: { Accept: "application/json" } });
+    if (!r.ok) throw new Error(`${url}: ${r.status}`);
+    return escAll(await r.json());
+  };
+
+  let D;
+  try {
+    D = await getJSON("/api/site");
+  } catch (e) {
+    $app.innerHTML = `<section class="empty panel"><h1>Sayt yuklanmadi</h1><p>Server bilan aloqa yo‘q. Sahifani birozdan so‘ng yangilang.</p></section>`;
+    return;
+  }
+  const L = D.links;
+  let products = null; // Uzum shop page, loaded on first visit
 
   /* ---------- helpers ---------- */
   const slugify = (s) =>
@@ -10,22 +32,19 @@
   const book = (slug) => D.books.find((b) => b.slug === slug);
   const newsItem = (slug) => D.news.find((n) => n.slug === slug);
   const cat = (slug) => D.categories.find((c) => c.slug === slug);
-  const cover = (slug) => `assets/books/${slug}.jpg`;
+  const cover = (b) => b.cover || (b.uzum && b.uzum.image) || "assets/books/placeholder.svg";
+  const catCover = (c) => { const b = book(c.cover); return b ? cover(b) : `assets/books/${c.cover}.jpg`; };
   const arrow = '<span class="arr" aria-hidden="true">↗</span>';
   const ext = 'target="_blank" rel="noopener"';
   const tel = (p) => "tel:" + p.replace(/\s/g, "");
 
-  /* Price and stock synced from Uzum Market (uzum.js, written by scripts/sync-uzum.mjs) */
-  const U = window.UZUM && Array.isArray(window.UZUM.products) && window.UZUM.products.length ? window.UZUM : null;
-  function uzumFor(b) {
-    if (!U) return null;
-    const id = Number(b.uzumId) || (U.books || {})[b.slug];
-    return (id && U.products.find((p) => p.id === id)) || null;
-  }
+  /* Price and stock synced from Uzum Market by the admin "Uzumdan yangilash" button */
+  const uzumFor = (b) => b.uzum || null;
   const som = (n) => n.toLocaleString("ru-RU").replace(/\s/g, " ") + " so‘m";
   const stockBadge = (u) =>
     `<span class="stock ${u.inStock ? "stock--in" : "stock--out"}">${u.inStock ? "Sotuvda" : "Tugagan"}</span>`;
-  const syncDate = () => (U && U.generatedAt ? new Date(U.generatedAt).toLocaleDateString("ru-RU") : "");
+  const oldPrice = (u) => (u.fullPrice ? ` <s class="old-price">${som(u.fullPrice)}</s>` : "");
+  const syncDate = (u) => (u && u.updatedAt ? new Date(u.updatedAt).toLocaleDateString("ru-RU") : "");
 
   const favKey = "falaq:favorites";
   function getFavs() {
@@ -48,12 +67,12 @@
   function bookCard(b) {
     const u = uzumFor(b);
     const price = u && (u.price || !u.inStock)
-      ? `<span class="book-card__price">${u.price ? som(u.price) : ""}${u.inStock ? "" : stockBadge(u)}</span>`
+      ? `<span class="book-card__price">${u.price ? som(u.price) : ""}${u.inStock ? oldPrice(u) : stockBadge(u)}</span>`
       : "";
     return `<article class="book-card">
       ${favButton(b.slug)}
       <a class="book-card__link" href="#/kitob/${b.slug}">
-        <img src="${cover(b.slug)}" alt="${b.title} — muqova" loading="lazy">
+        <img src="${cover(b)}" alt="${b.title} — muqova" loading="lazy">
         <span class="book-card__author">${b.author}</span>
         <h3 class="book-card__title">${b.title}</h3>
         ${price}
@@ -65,7 +84,7 @@
   function newsCard(n) {
     return `<article class="news-card">
       <a href="#/yangilik/${n.slug}">
-        <div class="news-card__img${n.app ? " is-app" : ""}"><img src="assets/news/${n.image}" alt="" loading="lazy"></div>
+        <div class="news-card__img${n.app ? " is-app" : ""}"><img src="${n.image}" alt="" loading="lazy"></div>
         <span class="news-card__src">Falaq Nashr</span>
         <h3 class="news-card__title">${n.title}</h3>
         <span class="more">Batafsil ${arrow}</span>
@@ -128,7 +147,7 @@
       <div class="section__head"><div><p class="eyebrow">O‘zingizga mos kitob</p><h2>Qaysi mavzu sizga yaqin?</h2></div></div>
       <div class="grid grid--3 topics">
         ${D.categories.map((c) => `<a class="topic" href="#/kitoblar/${c.slug}">
-            <span class="topic__img"><img src="${cover(c.cover)}" alt="" loading="lazy"></span>
+            <span class="topic__img"><img src="${catCover(c)}" alt="" loading="lazy"></span>
             <span class="topic__name">${c.name}</span>
             <span class="topic__tag">${c.tagline}</span>
           </a>`).join("")}
@@ -147,7 +166,7 @@
       </div>
       <div class="grid grid--3 news-mini-grid">${D.news.slice(0, 3).map((n) => `
         <article class="news-mini">
-          <a href="#/yangilik/${n.slug}" class="news-mini__img"><img src="assets/news/${n.image}" alt="" loading="lazy"></a>
+          <a href="#/yangilik/${n.slug}" class="news-mini__img"><img src="${n.image}" alt="" loading="lazy"></a>
           <span class="news-card__src">Falaq Nashr</span>
           <h3><a href="#/yangilik/${n.slug}">${n.title}</a></h3>
           <p>${n.summary}</p>
@@ -211,19 +230,19 @@
   function bookPage(slug) {
     const b = book(slug);
     if (!b) return notFound();
-    const c = cat(b.category);
+    const c = cat(b.category) || { slug: "", name: "Kitoblar" };
     const elon = b.news ? `#/yangilik/${b.news}` : L.telegram;
     const elonAttr = b.news ? "" : ext;
     const u = uzumFor(b);
     return `
     <nav class="crumbs" aria-label="Sahifa yo‘li"><a href="#/">Bosh sahifa</a> / <a href="#/kitoblar">Kitoblar</a> / <a href="#/kitoblar/${c.slug}">${c.name}</a></nav>
     <section class="book">
-      <div class="book__cover panel"><img src="${cover(b.slug)}" alt="${b.title} — muqova"></div>
+      <div class="book__cover panel"><img src="${cover(b)}" alt="${b.title} — muqova"></div>
       <div class="book__info">
         <p class="eyebrow eyebrow--blue">${c.name}</p>
         <h1>${b.title}</h1>
         <a class="book__author" href="#/muallif/${slugify(b.author)}">${b.author}</a>
-        ${u ? `<p class="book__price">${u.price ? som(u.price) : ""} ${stockBadge(u)}</p>` : ""}
+        ${u ? `<p class="book__price">${u.price ? som(u.price) : ""}${oldPrice(u)} ${stockBadge(u)}</p>` : ""}
         <p class="book__desc">${b.desc}</p>
         <dl class="specs"><div><dt>Nashriyot</dt><dd>Falaq Nashr</dd></div><div><dt>Til</dt><dd>O‘zbek tili</dd></div></dl>
         <div class="book__actions">
@@ -232,7 +251,7 @@
           ${favButton(b.slug)}
         </div>
         <p class="fine">${u
-          ? `Narx va mavjudlik Uzum Marketdan olingan (${syncDate()}). Aniq narx do‘kon sahifasida.`
+          ? `Narx va mavjudlik Uzum Marketdan olingan (${syncDate(u)}). Aniq narx do‘kon sahifasida.`
           : "Joriy narx va mavjudlikni rasmiy do‘konda tekshiring."}</p>
       </div>
     </section>
@@ -257,9 +276,9 @@
     ${pageHero(items[0].author, "Falaq Nashr katalogidagi asarlar", "Muallif kitoblari")}
     <section class="author-list">
       ${items.map((b) => `<article class="author-book panel">
-        <a href="#/kitob/${b.slug}"><img src="${cover(b.slug)}" alt="${b.title} — muqova" loading="lazy"></a>
+        <a href="#/kitob/${b.slug}"><img src="${cover(b)}" alt="${b.title} — muqova" loading="lazy"></a>
         <div>
-          <p class="eyebrow eyebrow--blue eyebrow--plain">${cat(b.category).name}</p>
+          <p class="eyebrow eyebrow--blue eyebrow--plain">${(cat(b.category) || {}).name || ""}</p>
           <h2><a href="#/kitob/${b.slug}">${b.title}</a></h2>
           <p>${b.desc}</p>
           <a class="more" href="${b.news ? "#/yangilik/" + b.news : L.telegram}" ${b.news ? "" : ext}>Nashriyot e’lonini o‘qish ${arrow}</a>
@@ -287,7 +306,7 @@
     </section>
     <article class="article">
       <p class="article__src">Falaq Nashr</p>
-      <img class="article__img${n.app ? " is-app" : ""}" src="assets/news/${n.image}" alt="">
+      <img class="article__img${n.app ? " is-app" : ""}" src="${n.image}" alt="">
       <p class="article__body">${n.body}</p>
       <p class="fine">To‘liq ma’lumot va amaldagi shartlar uchun rasmiy manbaga o‘ting.</p>
       <div class="article__cta">${cta}</div>
@@ -313,10 +332,70 @@
         <p class="fine">Yaqin kitob do‘konlari haqida Telegram botimiz orqali so‘rashingiz mumkin.</p>
       </div>
     </section>
+    <section class="form-wrap panel" id="yozish">
+      <div>
+        <p class="eyebrow eyebrow--blue">Murojaat</p>
+        <h2>Bizga yozing</h2>
+        <p class="muted">Ism va telefon raqamingizni qoldiring — mutaxassisimiz siz bilan bog‘lanadi.</p>
+      </div>
+      <form class="form" id="contact-form" novalidate>
+        <label>Ismingiz<input name="name" autocomplete="name" required maxlength="120"></label>
+        <label>Telefon<input name="phone" type="tel" autocomplete="tel" placeholder="+998 __ ___ __ __" required maxlength="40"></label>
+        <label>Mavzu
+          <select name="kind">
+            <option value="savol">Savol</option>
+            <option value="ulgurji">Ulgurji xarid</option>
+            <option value="hamkorlik">Hamkorlik</option>
+          </select>
+        </label>
+        <label class="form__full">Xabar<textarea name="text" rows="4" maxlength="2000"></textarea></label>
+        <input class="hp" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">
+        <div class="form__full form__foot">
+          <button class="btn" type="submit">Yuborish</button>
+          <p class="form__status" role="status" aria-live="polite"></p>
+        </div>
+      </form>
+    </section>
     <section class="socials panel">
       <a href="${L.telegram}" ${ext}><span>Telegram ${arrow}</span><small>@falaqnashr</small></a>
       <a href="${L.instagram}" ${ext}><span>Instagram ${arrow}</span><small>@falaqnashr</small></a>
       <a href="${L.youtube}" ${ext}><span>YouTube ${arrow}</span><small>@FalaqNashrRasmiy</small></a>
+    </section>`;
+  }
+
+  function shopPage() {
+    if (!products) {
+      getJSON("/api/products")
+        .then((d) => { products = d; if (location.hash.startsWith("#/dokon")) route(); })
+        .catch(() => { products = { products: [], failed: true }; route(); });
+      return `${pageHero("Uzum Marketdagi kitoblar", "Yuklanmoqda…")}`;
+    }
+    const sh = D.shop;
+    const list = products.products;
+    const synced = sh && sh.syncedAt ? new Date(sh.syncedAt).toLocaleDateString("ru-RU") : "";
+    const sub = list.length
+      ? `${list.length} ta mahsulot${synced ? ` · ${synced} holatiga` : ""}`
+      : "Mahsulotlar hali yuklanmagan.";
+    const card = (p) => `<article class="book-card product-card" data-title="${p.title.toLowerCase()}">
+        <a class="book-card__link" href="${p.url}" ${ext}>
+          <img src="${p.image || "assets/books/placeholder.svg"}" alt="" loading="lazy">
+          ${p.rating ? `<span class="book-card__author">★ ${p.rating}${p.reviews ? ` · ${p.reviews} sharh` : ""}</span>` : ""}
+          <h3 class="book-card__title">${p.title}</h3>
+          <span class="book-card__price">${p.price ? som(p.price) : ""}${p.inStock ? oldPrice(p) : stockBadge(p)}</span>
+          ${p.delivery ? `<span class="muted small">Yetkazish: ${p.delivery}</span>` : ""}
+          <span class="more">Uzumda ochish ${arrow}</span>
+        </a>
+      </article>`;
+    return `
+    ${pageHero("Uzum Marketdagi kitoblar", sub, "Onlayn do‘kon")}
+    <section class="section section--tight">
+      ${list.length ? `<div class="shop-tools">
+        <input id="shop-search" type="search" placeholder="Kitob nomi bo‘yicha qidirish" aria-label="Qidirish">
+        ${sh && sh.url ? `<a class="btn btn--outline btn--sm" href="${sh.url}" ${ext}>Do‘kon sahifasi ${arrow}</a>` : ""}
+      </div>` : ""}
+      <div class="grid grid--4" id="shop-grid">${list.map(card).join("")}</div>
+      ${list.length ? "" : `<p class="note">Administrator Uzumdan ma’lumotlarni yangilagach, kitoblar shu yerda paydo bo‘ladi. Hozircha <a href="${L.uzum}" ${ext}>Uzum Marketda qidiring ${arrow}</a>.</p>`}
+      <p class="note" id="shop-empty" hidden>Hech narsa topilmadi.</p>
     </section>`;
   }
 
@@ -358,6 +437,7 @@
     else if (a === "yangilik") { html = newsPage(b); title = (newsItem(b) || {}).title; nav = "yangiliklar"; }
     else if (a === "aloqa") { html = contact(); title = "Aloqa"; }
     else if (a === "saralangan") { html = favorites(); title = "Saralangan"; }
+    else if (a === "dokon") { html = shopPage(); title = "Uzum do‘kon"; }
     else html = notFound();
 
     $app.innerHTML = html;
@@ -412,6 +492,43 @@
     }
   });
   document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeMenus(); });
+
+  document.addEventListener("input", (e) => {
+    if (e.target.id !== "shop-search") return;
+    const needle = e.target.value.trim().toLowerCase();
+    let shown = 0;
+    document.querySelectorAll("#shop-grid .product-card").forEach((el) => {
+      const hit = el.dataset.title.includes(needle);
+      el.hidden = !hit;
+      shown += hit;
+    });
+    document.getElementById("shop-empty").hidden = shown > 0;
+  });
+
+  document.addEventListener("submit", async (e) => {
+    if (e.target.id !== "contact-form") return;
+    e.preventDefault();
+    const form = e.target;
+    const status = form.querySelector(".form__status");
+    const btn = form.querySelector("button[type=submit]");
+    const body = Object.fromEntries(new FormData(form));
+    btn.disabled = true;
+    status.className = "form__status";
+    status.textContent = "Yuborilmoqda…";
+    try {
+      const r = await fetch("/api/messages", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(d.error || "Xatolik yuz berdi");
+      form.reset();
+      status.classList.add("is-ok");
+      status.textContent = "Rahmat! Xabaringiz qabul qilindi, tez orada bog‘lanamiz.";
+    } catch (err) {
+      status.classList.add("is-err");
+      status.textContent = err.message;
+    } finally {
+      btn.disabled = false;
+    }
+  });
 
   document.getElementById("year").textContent = new Date().getFullYear();
   window.addEventListener("hashchange", route);

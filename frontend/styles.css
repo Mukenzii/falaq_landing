@@ -298,6 +298,29 @@ p { margin: 0; }
 .footer-cols a:hover { color: var(--sky); opacity: 1; }
 .copyright { padding: 18px max(var(--gutter), 2.5vw) 28px; font-size: .9rem; color: var(--navy); }
 
+/* ---------- Uzum shop, contact form ---------- */
+.old-price { color: var(--muted); font-weight: 400; font-size: .82em; }
+.small { font-size: .78rem; }
+.product-card .book-card__title { font-size: .95rem; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.shop-tools { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; margin-bottom: 24px; }
+.shop-tools input { flex: 1 1 260px; max-width: 420px; }
+.shop-tools input, .form input, .form select, .form textarea {
+  font: inherit; color: var(--text); background: var(--bg);
+  border: 1px solid var(--line); border-radius: 10px; padding: .75em .9em; width: 100%;
+}
+.shop-tools input:focus, .form :is(input, select, textarea):focus { outline: 2px solid var(--blue); outline-offset: 0; border-color: transparent; }
+.form-wrap { display: grid; grid-template-columns: 1fr 1.4fr; gap: clamp(24px, 5vw, 64px); padding: clamp(28px, 4vw, 52px) clamp(24px, 5vw, 70px); margin-bottom: clamp(32px, 4vw, 48px); }
+.form-wrap h2 { margin: 10px 0 12px; }
+.form { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.form label { display: grid; gap: 6px; font-size: .85rem; font-weight: 500; color: var(--navy); }
+.form__full { grid-column: 1 / -1; }
+.form__foot { display: flex; flex-wrap: wrap; align-items: center; gap: 16px; }
+.form__status { font-size: .9rem; }
+.form__status.is-ok { color: #1d6b3a; }
+.form__status.is-err { color: #b42318; }
+.form .btn:disabled { opacity: .6; cursor: progress; }
+.hp { position: absolute; left: -9999px; width: 1px; height: 1px; opacity: 0; }
+
 /* ---------- responsive ---------- */
 @media (max-width: 1024px) {
   .grid--4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -326,6 +349,7 @@ p { margin: 0; }
   .grid--3 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .footer-cols { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .socials { grid-template-columns: 1fr; }
+  .form-wrap { grid-template-columns: 1fr; }
 }
 @media (max-width: 560px) {
   .grid--4, .grid--3, .catalog .grid--3 { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
@@ -338,6 +362,7 @@ p { margin: 0; }
   .author-book img { max-height: 260px; }
   .facts { justify-content: flex-start; }
   .footer-cols { grid-template-columns: 1fr 1fr; }
+  .form { grid-template-columns: 1fr; }
 }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { transition: none !important; scroll-behavior: auto !important; }

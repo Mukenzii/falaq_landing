@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="uz">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Falaq Nashr — Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="admin.css">
+</head>
+<body>
+<section id="login" class="login" hidden>
+  <form id="login-form" class="card login__card">
+    <p class="eyebrow">Falaq Nashr</p>
+    <h1>Admin panel</h1>
+    <label>Parol<input type="password" name="password" autocomplete="current-password" required autofocus></label>
+    <button class="btn" type="submit">Kirish</button>
+    <p class="status" role="status"></p>
+  </form>
+</section>
+
+<div id="shell" hidden>
+  <header class="top">
+    <a class="top__brand" href="/" target="_blank" rel="noopener">Falaq Nashr <span>admin</span></a>
+    <nav class="tabs" role="tablist">
+      <button role="tab" data-tab="uzum">Uzum</button>
+      <button role="tab" data-tab="books">Kitoblar</button>
+      <button role="tab" data-tab="news">Yangiliklar</button>
+      <button role="tab" data-tab="messages">Xabarlar <span id="msg-badge" class="pill" hidden></span></button>
+      <button role="tab" data-tab="settings">Sozlamalar</button>
+    </nav>
+    <button id="logout" class="btn btn--ghost btn--sm" type="button">Chiqish</button>
+  </header>
+  <main id="view" class="view"></main>
+</div>
+
+<dialog id="editor" class="editor">
+  <form method="dialog" id="editor-form">
+    <h2 id="editor-title"></h2>
+    <div id="editor-fields" class="fields"></div>
+    <p class="status" id="editor-status" role="status"></p>
+    <div class="editor__actions">
+      <button class="btn btn--ghost" value="cancel" formnovalidate>Bekor qilish</button>
+      <button class="btn" id="editor-save" value="save">Saqlash</button>
+    </div>
+  </form>
+</dialog>
+
+<script src="admin.js"></script>
+</body>
+</html>

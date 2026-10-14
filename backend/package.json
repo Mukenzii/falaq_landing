@@ -1,0 +1,16 @@
+{
+  "name": "falaq-backend",
+  "private": true,
+  "description": "Falaq Nashr website API",
+  "type": "module",
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "start": "node src/server.js",
+    "scrape": "node src/scrape-cli.js"
+  },
+  "dependencies": {
+    "express": "^4.21.2",
+    "pg": "^8.13.1",
+    "playwright": "1.49.1"
+  }
+}
