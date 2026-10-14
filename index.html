@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="uz">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Falaq Nashr</title>
+<meta name="description" content="Falaq Nashr — kitoblarni asl tillaridan o‘zbek tiliga tarjima qilib nashr etuvchi nashriyot. Badiiy, ma’rifiy, oila va tarbiyaga oid kitoblar.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header class="site-header">
+  <a class="logo" href="#/" aria-label="Falaq Nashr — bosh sahifa">
+    <svg viewBox="0 0 64 54" width="52" height="44" aria-hidden="true">
+      <path d="M11 9l1.6 4.4L17 15l-4.4 1.6L11 21l-1.6-4.4L5 15l4.4-1.6z" fill="currentColor"/>
+      <g stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
+        <path d="M30 30L28 4"/><path d="M30 30L34 5"/><path d="M30 30L40 8"/><path d="M30 30L45 12"/>
+        <path d="M30 30L50 17"/><path d="M30 30L54 22"/><path d="M30 30L57 27"/>
+      </g>
+      <path d="M8 31h14c5 0 8-3 8-8v8h28" fill="none" stroke="currentColor" stroke-width="2"/>
+      <text x="32" y="46" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="14" fill="currentColor" letter-spacing=".5">FALAQ</text>
+      <text x="32" y="53" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="6" fill="currentColor" letter-spacing="1">NASHR</text>
+    </svg>
+  </a>
+
+  <nav class="main-nav" aria-label="Asosiy menyu">
+    <a href="#/" data-nav="">Bosh sahifa</a>
+    <a href="#/nashriyot" data-nav="nashriyot">Nashriyot</a>
+    <div class="dd" id="books-dd">
+      <button type="button" data-nav="kitoblar" aria-expanded="false" aria-haspopup="true">Kitoblar
+        <svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true"><path d="M2 4l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.4"/></svg>
+      </button>
+      <div class="dd__menu">
+        <a href="#/kitoblar">Barcha kitoblar</a>
+        <a href="#/kitoblar/badiiy">Badiiy adabiyot</a>
+        <a href="#/kitoblar/marifiy">Ma’rifiy adabiyot</a>
+        <a href="#/kitoblar/oila">Oila va tarbiya</a>
+      </div>
+    </div>
+    <a href="#/yangiliklar" data-nav="yangiliklar">Yangiliklar</a>
+    <a href="#/aloqa" data-nav="aloqa">Aloqa</a>
+  </nav>
+
+  <div class="header-actions">
+    <a class="fav-link" href="#/saralangan" data-nav="saralangan" aria-label="Saralangan kitoblar">
+      <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M12 20.5s-7.5-4.6-9.3-9.2C1.4 8 3.4 4.5 7 4.5c2 0 3.5 1.1 5 3 1.5-1.9 3-3 5-3 3.6 0 5.6 3.5 4.3 6.8-1.8 4.6-9.3 9.2-9.3 9.2z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
+      <span id="fav-count" class="badge" hidden>0</span>
+    </a>
+    <a class="btn btn--sm header-cta" href="#/aloqa">Bog‘lanish <span aria-hidden="true">↗</span></a>
+    <button id="menu-toggle" class="menu-toggle" type="button" aria-label="Menyu" aria-expanded="false"><span></span><span></span><span></span></button>
+  </div>
+</header>
+
+<main id="app" class="site-main"></main>
+
+<footer class="site-footer">
+  <div class="footer-cols">
+    <div><h3>Nashriyot</h3><a href="#/">Bosh sahifa</a><a href="#/nashriyot">Biz haqimizda</a><a href="#/aloqa">Aloqa</a></div>
+    <div><h3>Kitoblar</h3><a href="#/kitoblar/badiiy">Badiiy adabiyot</a><a href="#/kitoblar/marifiy">Ma’rifiy adabiyot</a><a href="#/kitoblar/oila">Oila va tarbiya</a></div>
+    <div><h3>Xarid qilish</h3><a href="https://uzum.uz/uz/search?query=falaq%20nashr" target="_blank" rel="noopener">Uzum Market</a><a href="#/yangiliklar">Yangiliklar</a></div>
+    <div><h3>Ijtimoiy tarmoqlar</h3><a href="https://t.me/falaqnashr" target="_blank" rel="noopener">Telegram</a><a href="https://www.instagram.com/falaqnashr" target="_blank" rel="noopener">Instagram</a><a href="https://www.youtube.com/@FalaqNashrRasmiy" target="_blank" rel="noopener">YouTube</a></div>
+  </div>
+</footer>
+<p class="copyright">© <span id="year">2026</span> Falaq Nashr. Barcha huquqlar himoyalangan.</p>
+
+<script src="data.js"></script>
+<script src="uzum.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
