@@ -17,7 +17,7 @@ const setting = async (key, fallback = null) =>
 const productOut = (p) => p && {
   id: Number(p.id), productId: Number(p.product_id), title: p.title, price: p.price, fullPrice: p.full_price,
   image: p.image, images: p.images, rating: p.rating, reviews: p.reviews, inStock: p.in_stock,
-  delivery: p.delivery, url: p.url, active: p.active, updatedAt: p.updated_at,
+  delivery: p.delivery, url: p.url, category: p.category, active: p.active, updatedAt: p.updated_at,
 };
 const bookOut = (b) => ({
   id: b.id, slug: b.slug, title: b.title, author: b.author, category: b.category, desc: b.description,

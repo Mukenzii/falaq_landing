@@ -63,6 +63,7 @@ function toProduct(p) {
     reviews: null,
     inStock: qty > 0 && !NOT_BUYABLE.has(status) && prices.length > 0,
     delivery: null,
+    category: typeof p.category === "string" ? p.category : p.category?.title ?? null,
     status,
     url: `https://uzum.uz/uz/product/${normalize(title).replace(/ /g, "-") || "product"}-${id}`,
   };

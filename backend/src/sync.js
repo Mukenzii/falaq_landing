@@ -49,12 +49,12 @@ async function run(id) {
       await c.query("BEGIN");
       for (const p of products) {
         await c.query(
-          `INSERT INTO uzum_products (id, product_id, title, price, full_price, image, images, rating, reviews, in_stock, delivery, url, active, updated_at)
-           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,true,now())
+          `INSERT INTO uzum_products (id, product_id, title, price, full_price, image, images, rating, reviews, in_stock, delivery, url, category, active, updated_at)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,true,now())
            ON CONFLICT (id) DO UPDATE SET product_id=$2, title=$3, price=$4, full_price=$5, image=$6, images=$7,
-             rating=$8, reviews=$9, in_stock=$10, delivery=$11, url=$12, active=true, updated_at=now()`,
+             rating=$8, reviews=$9, in_stock=$10, delivery=$11, url=$12, category=$13, active=true, updated_at=now()`,
           [p.id, p.productId, p.title, p.price, p.fullPrice, p.image, JSON.stringify(p.images), p.rating, p.reviews,
-            p.inStock, p.delivery, p.url],
+            p.inStock, p.delivery, p.url, p.category],
         );
       }
       // Products that disappeared from Uzum stay in the table (books may link to them) but are hidden.

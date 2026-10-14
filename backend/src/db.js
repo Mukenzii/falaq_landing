@@ -56,6 +56,7 @@ CREATE TABLE IF NOT EXISTS uzum_products (
   reviews    int,
   in_stock   boolean NOT NULL DEFAULT false,
   delivery   text,
+  category   text,
   url        text NOT NULL,
   active     boolean NOT NULL DEFAULT true,
   updated_at timestamptz NOT NULL DEFAULT now()
@@ -91,4 +92,5 @@ export async function migrate() {
   }
   await q(SCHEMA);
   await q("ALTER TABLE books ADD COLUMN IF NOT EXISTS uzum_manual boolean NOT NULL DEFAULT false");
+  await q("ALTER TABLE uzum_products ADD COLUMN IF NOT EXISTS category text");
 }

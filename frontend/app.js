@@ -100,6 +100,24 @@
     </section>`;
   }
 
+  // Page links for long lists. href(n) builds the link for page n.
+  function pager(page, pages, href) {
+    if (pages <= 1) return "";
+    const nums = [];
+    for (let n = 1; n <= pages; n++) {
+      if (n === 1 || n === pages || Math.abs(n - page) <= 1) nums.push(n);
+      else if (nums[nums.length - 1] !== "…") nums.push("…");
+    }
+    const link = (n, label, aria) => `<a class="pager__btn" href="${href(n)}" aria-label="${aria}">${label}</a>`;
+    return `<nav class="pager" aria-label="Sahifalar">
+      ${page > 1 ? link(page - 1, "←", "Oldingi sahifa") : `<span class="pager__btn is-off" aria-hidden="true">←</span>`}
+      ${nums.map((n) => n === "…" ? `<span class="pager__gap">…</span>`
+        : n === page ? `<span class="pager__btn is-on" aria-current="page">${n}</span>` : link(n, n, `${n}-sahifa`)).join("")}
+      ${page < pages ? link(page + 1, "→", "Keyingi sahifa") : `<span class="pager__btn is-off" aria-hidden="true">→</span>`}
+    </nav>`;
+  }
+  const pageOf = (params, pages) => Math.min(Math.max(parseInt(params.get("p"), 10) || 1, 1), Math.max(pages, 1));
+
   function wholesaleBand() {
     return `<section class="band">
       <div class="band__text">
@@ -208,10 +226,14 @@
     elonlar: { title: "Nashriyot e’lonlarida", filter: (b) => b.announced, hidden: true },
   };
 
-  function catalog(key) {
+  const BOOKS_PER_PAGE = 9;
+  function catalog(key, params) {
     const l = lists[key];
     if (!l) return notFound();
-    const items = D.books.filter(l.filter);
+    const all = D.books.filter(l.filter);
+    const pages = Math.ceil(all.length / BOOKS_PER_PAGE);
+    const page = pageOf(params, pages);
+    const items = all.slice((page - 1) * BOOKS_PER_PAGE, page * BOOKS_PER_PAGE);
     const side = ["", "badiiy", "marifiy", "oila"]
       .map((k) => `<li><a href="#/kitoblar${k ? "/" + k : ""}" class="${k === key ? "active" : ""}"${k === key ? ' aria-current="page"' : ""}>${lists[k].title}</a></li>`)
       .join("");
@@ -220,8 +242,9 @@
     <section class="catalog">
       <nav class="catalog__side" aria-label="Kitob bo‘limlari"><p class="eyebrow">Kitoblar</p><ul>${side}</ul></nav>
       <div class="catalog__main">
-        <p class="count">${items.length} ta kitob</p>
+        <p class="count list-top">${all.length} ta kitob${pages > 1 ? ` · ${page}/${pages}-sahifa` : ""}</p>
         <div class="grid grid--3">${items.map(bookCard).join("")}</div>
+        ${pager(page, pages, (n) => `#/kitoblar${key ? "/" + key : ""}${n > 1 ? "?p=" + n : ""}`)}
         <p class="note">Chakana xarid — Uzum Market orqali. Ulgurji savdo — rasmiy aloqa raqamlarida.</p>
       </div>
     </section>`;
@@ -363,7 +386,45 @@
     </section>`;
   }
 
-  function shopPage() {
+  const PRODUCTS_PER_PAGE = 12;
+  const OTHER = "Boshqa";
+  const shopHref = (st) => {
+    const qs = new URLSearchParams();
+    if (st.cat) qs.set("cat", st.cat);
+    if (st.q) qs.set("q", st.q);
+    if (st.p > 1) qs.set("p", st.p);
+    return "#/dokon" + (qs.toString() ? "?" + qs : "");
+  };
+  // Data is HTML-escaped on load; filters work on the plain text (st.cat and st.q are never escaped).
+  const decode = (s) => { const t = document.createElement("textarea"); t.innerHTML = s; return t.value; };
+
+  function productCard(p) {
+    return `<article class="book-card product-card">
+        <a class="book-card__link" href="${p.url}" ${ext}>
+          <img src="${p.image || "assets/books/placeholder.svg"}" alt="" loading="lazy">
+          ${p.rating ? `<span class="book-card__author">★ ${p.rating}${p.reviews ? ` · ${p.reviews} sharh` : ""}</span>` : ""}
+          <h3 class="book-card__title">${p.title}</h3>
+          <span class="book-card__price">${p.price ? som(p.price) : ""}${p.inStock ? oldPrice(p) : stockBadge(p)}</span>
+          ${p.delivery ? `<span class="muted small">Yetkazish: ${p.delivery}</span>` : ""}
+          <span class="more">Uzumda ochish ${arrow}</span>
+        </a>
+      </article>`;
+  }
+
+  // Grid + pager for the current filters; redrawn on its own while typing in the search box.
+  function shopResults(st) {
+    const needle = st.q.trim().toLowerCase();
+    const list = products.products.filter((p) =>
+      (!st.cat || decode(p.category || OTHER) === st.cat) && (!needle || decode(p.title).toLowerCase().includes(needle)));
+    const pages = Math.ceil(list.length / PRODUCTS_PER_PAGE);
+    const page = Math.min(Math.max(st.p, 1), Math.max(pages, 1));
+    const items = list.slice((page - 1) * PRODUCTS_PER_PAGE, page * PRODUCTS_PER_PAGE);
+    return `<p class="count">${list.length} ta mahsulot${pages > 1 ? ` · ${page}/${pages}-sahifa` : ""}</p>
+      ${items.length ? `<div class="grid grid--4">${items.map(productCard).join("")}</div>` : `<p class="note">Hech narsa topilmadi.</p>`}
+      ${pager(page, pages, (n) => shopHref({ ...st, p: n }))}`;
+  }
+
+  function shopPage(params) {
     if (!products) {
       getJSON("/api/products")
         .then((d) => { products = d; if (location.hash.startsWith("#/dokon")) route(); })
@@ -376,26 +437,29 @@
     const sub = list.length
       ? `${list.length} ta mahsulot${synced ? ` · ${synced} holatiga` : ""}`
       : "Mahsulotlar hali yuklanmagan.";
-    const card = (p) => `<article class="book-card product-card" data-title="${p.title.toLowerCase()}">
-        <a class="book-card__link" href="${p.url}" ${ext}>
-          <img src="${p.image || "assets/books/placeholder.svg"}" alt="" loading="lazy">
-          ${p.rating ? `<span class="book-card__author">★ ${p.rating}${p.reviews ? ` · ${p.reviews} sharh` : ""}</span>` : ""}
-          <h3 class="book-card__title">${p.title}</h3>
-          <span class="book-card__price">${p.price ? som(p.price) : ""}${p.inStock ? oldPrice(p) : stockBadge(p)}</span>
-          ${p.delivery ? `<span class="muted small">Yetkazish: ${p.delivery}</span>` : ""}
-          <span class="more">Uzumda ochish ${arrow}</span>
-        </a>
-      </article>`;
+    if (!list.length) {
+      return `${pageHero("Uzum Marketdagi kitoblar", sub, "Onlayn do‘kon")}
+      <section class="section section--tight"><p class="note">Administrator Uzumdan ma’lumotlarni yangilagach, kitoblar shu yerda paydo bo‘ladi. Hozircha <a href="${L.uzum}" ${ext}>Uzum Marketda qidiring ${arrow}</a>.</p></section>`;
+    }
+
+    const counts = new Map();
+    for (const p of list) counts.set(p.category || OTHER, (counts.get(p.category || OTHER) || 0) + 1);
+    const cats = [...counts].sort((a, z) => (a[0] === OTHER) - (z[0] === OTHER) || z[1] - a[1] || a[0].localeCompare(z[0]));
+    const st = { cat: params.get("cat") || "", q: params.get("q") || "", p: parseInt(params.get("p"), 10) || 1 };
+    if (!cats.some(([c]) => decode(c) === st.cat)) st.cat = "";
+
     return `
     ${pageHero("Uzum Marketdagi kitoblar", sub, "Onlayn do‘kon")}
     <section class="section section--tight">
-      ${list.length ? `<div class="shop-tools">
-        <input id="shop-search" type="search" placeholder="Kitob nomi bo‘yicha qidirish" aria-label="Qidirish">
+      <div class="shop-tools list-top">
+        <input id="shop-search" type="search" placeholder="Kitob nomi bo‘yicha qidirish" aria-label="Qidirish" value="${esc(st.q)}">
+        ${cats.length > 1 ? `<select id="shop-cat" aria-label="Bo‘lim">
+          <option value="">Barcha bo‘limlar (${list.length})</option>
+          ${cats.map(([c, n]) => `<option value="${c}"${decode(c) === st.cat ? " selected" : ""}>${c} (${n})</option>`).join("")}
+        </select>` : ""}
         ${sh && sh.url ? `<a class="btn btn--outline btn--sm" href="${sh.url}" ${ext}>Do‘kon sahifasi ${arrow}</a>` : ""}
-      </div>` : ""}
-      <div class="grid grid--4" id="shop-grid">${list.map(card).join("")}</div>
-      ${list.length ? "" : `<p class="note">Administrator Uzumdan ma’lumotlarni yangilagach, kitoblar shu yerda paydo bo‘ladi. Hozircha <a href="${L.uzum}" ${ext}>Uzum Marketda qidiring ${arrow}</a>.</p>`}
-      <p class="note" id="shop-empty" hidden>Hech narsa topilmadi.</p>
+      </div>
+      <div id="shop-results">${shopResults(st)}</div>
     </section>`;
   }
 
@@ -424,20 +488,23 @@
 
   /* ---------- router ---------- */
   const titles = { "": "Bosh sahifa" };
+  let lastPath = null;
   function route() {
-    const parts = location.hash.replace(/^#\/?/, "").split("/").filter(Boolean);
+    const [path, qs = ""] = location.hash.replace(/^#\/?/, "").split("?");
+    const params = new URLSearchParams(qs);
+    const parts = path.split("/").filter(Boolean);
     const [a, b] = parts;
     let html, title, nav = a || "";
     if (!a) html = home();
     else if (a === "nashriyot") { html = about(); title = "Nashriyot"; }
-    else if (a === "kitoblar") { html = catalog(b || ""); title = (lists[b || ""] || {}).title; }
+    else if (a === "kitoblar") { html = catalog(b || "", params); title = (lists[b || ""] || {}).title; }
     else if (a === "kitob") { html = bookPage(b); title = (book(b) || {}).title; nav = "kitoblar"; }
     else if (a === "muallif") { html = authorPage(b); nav = "kitoblar"; }
     else if (a === "yangiliklar") { html = newsList(); title = "Yangiliklar"; }
     else if (a === "yangilik") { html = newsPage(b); title = (newsItem(b) || {}).title; nav = "yangiliklar"; }
     else if (a === "aloqa") { html = contact(); title = "Aloqa"; }
     else if (a === "saralangan") { html = favorites(); title = "Saralangan"; }
-    else if (a === "dokon") { html = shopPage(); title = "Uzum do‘kon"; }
+    else if (a === "dokon") { html = shopPage(params); title = "Uzum do‘kon"; }
     else html = notFound();
 
     $app.innerHTML = html;
@@ -447,7 +514,11 @@
     });
     updateFavCount();
     closeMenus();
-    window.scrollTo(0, 0);
+    // Paging or filtering within the same list keeps the list in view; other pages start at the top.
+    const top = path === lastPath && document.querySelector(".list-top");
+    if (top) top.scrollIntoView({ block: "start" });
+    else window.scrollTo(0, 0);
+    lastPath = path;
   }
 
   /* ---------- interactions ---------- */
@@ -495,14 +566,16 @@
 
   document.addEventListener("input", (e) => {
     if (e.target.id !== "shop-search") return;
-    const needle = e.target.value.trim().toLowerCase();
-    let shown = 0;
-    document.querySelectorAll("#shop-grid .product-card").forEach((el) => {
-      const hit = el.dataset.title.includes(needle);
-      el.hidden = !hit;
-      shown += hit;
-    });
-    document.getElementById("shop-empty").hidden = shown > 0;
+    // Redraw only the results so the search box keeps focus; replaceState keeps the URL shareable.
+    const cat = document.getElementById("shop-cat");
+    const st = { cat: cat ? cat.value : "", q: e.target.value, p: 1 };
+    history.replaceState(null, "", shopHref(st));
+    document.getElementById("shop-results").innerHTML = shopResults(st);
+  });
+
+  document.addEventListener("change", (e) => {
+    if (e.target.id !== "shop-cat") return;
+    location.hash = shopHref({ cat: e.target.value, q: document.getElementById("shop-search").value, p: 1 });
   });
 
   document.addEventListener("submit", async (e) => {

@@ -17,6 +17,7 @@ const MAX_ITEMS = 2000;
 const SEARCH_QUERY = `query FalaqSync($q: MakeSearchQueryInput!) {
   makeSearch(query: $q) {
     total
+    categoryTree { category { id title parent { id } } total }
     items {
       catalogCard {
         __typename
@@ -77,6 +78,7 @@ export async function scrapeUzum({ shop, fallbackQuery, fallbackMatch, log = () 
     if (!shopInfo) log(`! "${shop}" do‘koni topilmadi.`);
     else log(`Do‘kon: ${shopInfo.title} (id ${shopInfo.id}), reyting ${shopInfo.rating}, ${shopInfo.orders} buyurtma`);
 
+    let tree = [];
     const search = async (input) => {
       const out = [];
       for (let offset = 0; offset < MAX_ITEMS; offset += PAGE_SIZE) {
@@ -92,6 +94,7 @@ export async function scrapeUzum({ shop, fallbackQuery, fallbackMatch, log = () 
         const json = JSON.parse(res.text);
         if (json.errors?.length) throw new Error(`Uzum GraphQL: ${json.errors[0].message}`);
         const ms = json.data.makeSearch;
+        if (offset === 0 && !input.categoryId) tree = ms.categoryTree || [];
         out.push(...ms.items.map((i) => i.catalogCard));
         if (!ms.items.length || out.length >= ms.total) break;
         await page.waitForTimeout(400);
@@ -100,14 +103,16 @@ export async function scrapeUzum({ shop, fallbackQuery, fallbackMatch, log = () 
     };
 
     let source = "shop";
-    let cards = shopInfo ? await search({ shopId: String(shopInfo.id) }) : [];
+    let base = shopInfo ? { shopId: String(shopInfo.id) } : null;
+    let cards = base ? await search(base) : [];
     log(`Do‘kon sahifasida ${cards.length} ta mahsulot.`);
 
     if (!cards.length && fallbackQuery) {
       source = "search";
       log(`Do‘kon bo‘sh. Uzum qidiruvi ishlatiladi: "${fallbackQuery}"`);
       const re = new RegExp(fallbackMatch || fallbackQuery, "i");
-      const all = await search({ text: fallbackQuery });
+      base = { text: fallbackQuery };
+      const all = await search(base);
       cards = all.filter((c) => re.test(c?.discovery?.title || ""));
       log(`Qidiruvda ${all.length} ta natija, nomida "${re.source}" borlari: ${cards.length}.`);
     }
@@ -118,6 +123,22 @@ export async function scrapeUzum({ shop, fallbackQuery, fallbackMatch, log = () 
       const p = toProduct(c);
       if (p && !seen.has(p.id)) { seen.add(p.id); products.push(p); }
     }
+
+    // Search cards carry no category, but every search returns a category tree. Take the top-level
+    // sections under the busiest root (on Uzum that is "Kitoblar") and search each one to label items.
+    const byId = new Map(products.map((p) => [p.id, p]));
+    const root = tree.filter((t) => t.category.parent?.id === 1).sort((a, z) => z.total - a.total)[0];
+    const sections = root ? tree.filter((t) => t.category.parent?.id === root.category.id).sort((a, z) => z.total - a.total) : [];
+    for (const s of sections) {
+      const hits = await search({ ...base, categoryId: String(s.category.id) });
+      let n = 0;
+      for (const c of hits) {
+        const p = byId.get(Number(c?.discovery?.id));
+        if (p && !p.category) { p.category = s.category.title; n++; }
+      }
+      if (n) log(`Bo‘lim “${s.category.title}”: ${n} ta mahsulot.`);
+    }
+
     return { shop: shopInfo, source, products };
   } finally {
     await browser.close();
@@ -149,6 +170,7 @@ function toProduct(card) {
     // Uzum's catalog search only returns items that can be ordered.
     inStock: sell != null,
     delivery: card.buyingOptions?.deliveryOptions?.shortDate ?? null,
+    category: null,
     url: `${SITE}/uz/product/${urlSlug(title)}-${productId}${sku}`,
   };
 }

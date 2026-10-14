@@ -319,6 +319,18 @@ p { margin: 0; }
 .form__status.is-ok { color: #1d6b3a; }
 .form__status.is-err { color: #b42318; }
 .form .btn:disabled { opacity: .6; cursor: progress; }
+.shop-tools select { flex: 0 1 300px; font: inherit; color: var(--text); background: var(--bg); border: 1px solid var(--line); border-radius: 10px; padding: .75em .9em; }
+.shop-tools .btn { margin-left: auto; }
+.list-top { scroll-margin-top: 96px; }
+.pager { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 6px; margin-top: 32px; }
+.pager__btn {
+  min-width: 42px; height: 42px; padding: 0 12px; display: inline-flex; align-items: center; justify-content: center;
+  border: 1px solid var(--line); border-radius: 10px; font-weight: 600; color: var(--navy); font-variant-numeric: tabular-nums;
+}
+a.pager__btn:hover { background: var(--surface); border-color: var(--blue); color: var(--blue); }
+.pager__btn.is-on { background: var(--blue); border-color: var(--blue); color: var(--on-dark); }
+.pager__btn.is-off { color: var(--line); }
+.pager__gap { color: var(--muted); padding: 0 4px; }
 .hp { position: absolute; left: -9999px; width: 1px; height: 1px; opacity: 0; }
 
 /* ---------- responsive ---------- */
