@@ -44,7 +44,6 @@
   const stockBadge = (u) =>
     `<span class="stock ${u.inStock ? "stock--in" : "stock--out"}">${u.inStock ? "Sotuvda" : "Tugagan"}</span>`;
   const oldPrice = (u) => (u.fullPrice ? ` <s class="old-price">${som(u.fullPrice)}</s>` : "");
-  const syncDate = (u) => (u && u.updatedAt ? new Date(u.updatedAt).toLocaleDateString("ru-RU") : "");
 
   const favKey = "falaq:favorites";
   function getFavs() {
@@ -208,12 +207,6 @@
         <div><a class="btn" href="${L.telegram}" ${ext}>Rasmiy kanalimiz</a></div>
       </div>
     </section>
-    <section class="kids panel">
-      <p class="eyebrow eyebrow--blue">Falaq Kids</p>
-      <h2>Kichik kitobxonlar uchun.</h2>
-      <p>Bolalar adabiyotiga bag‘ishlangan Falaq Kids yo‘nalishi haqida rasmiy aloqa kanallarimiz orqali ma’lumot oling.</p>
-      <div><a class="btn" href="${L.telegram}" ${ext}>Falaq Kids haqida so‘rash</a></div>
-    </section>
     ${wholesaleBand()}`;
   }
 
@@ -242,10 +235,9 @@
     <section class="catalog">
       <nav class="catalog__side" aria-label="Kitob bo‘limlari"><p class="eyebrow">Kitoblar</p><ul>${side}</ul></nav>
       <div class="catalog__main">
-        <p class="count list-top">${all.length} ta kitob${pages > 1 ? ` · ${page}/${pages}-sahifa` : ""}</p>
+        <p class="count list-top">${all.length} ta kitob</p>
         <div class="grid grid--3">${items.map(bookCard).join("")}</div>
         ${pager(page, pages, (n) => `#/kitoblar${key ? "/" + key : ""}${n > 1 ? "?p=" + n : ""}`)}
-        <p class="note">Chakana xarid — Uzum Market orqali. Ulgurji savdo — rasmiy aloqa raqamlarida.</p>
       </div>
     </section>`;
   }
@@ -273,9 +265,6 @@
           <a class="btn btn--outline" href="#/aloqa">Ulgurji xarid uchun</a>
           ${favButton(b.slug)}
         </div>
-        <p class="fine">${u
-          ? `Narx va mavjudlik Uzum Marketdan olingan (${syncDate(u)}). Aniq narx do‘kon sahifasida.`
-          : "Joriy narx va mavjudlikni rasmiy do‘konda tekshiring."}</p>
       </div>
     </section>
     <section class="book-more">
@@ -287,7 +276,6 @@
       <dl class="faq">
         <div><dt>Qayerdan xarid qilish mumkin?</dt><dd>Kitob do‘konlaridan yoki Uzum Marketdagi Falaq Nashr rasmiy sahifasidan.</dd></div>
         <div><dt>Ulgurji buyurtma qanday beriladi?</dt><dd>${D.phones.join(" yoki ")} raqamlariga murojaat qiling.</dd></div>
-        <div><dt>Nashr va yetkazib berish shartlari-chi?</dt><dd>Alifbo, mavjud nashr, narx va yetkazib berish muddatini sotuvchidan aniqlashtiring.</dd></div>
       </dl>
     </section>`;
   }
@@ -331,7 +319,6 @@
       <p class="article__src">Falaq Nashr</p>
       <img class="article__img${n.app ? " is-app" : ""}" src="${n.image}" alt="">
       <p class="article__body">${n.body}</p>
-      <p class="fine">To‘liq ma’lumot va amaldagi shartlar uchun rasmiy manbaga o‘ting.</p>
       <div class="article__cta">${cta}</div>
     </article>`;
   }
@@ -344,15 +331,13 @@
         <p class="eyebrow">Ulgurji savdo</p>
         <h2>Kitob do‘konlari uchun hamkorlik.</h2>
         ${D.phones.map((p) => `<a class="contact__phone" href="${tel(p)}">${p}</a>`).join("")}
-        <p class="muted">Ulgurji buyurtmalar va savdo shartlarini telefon orqali aniqlashtiring.</p>
         <div><a class="btn" href="${L.telegramBot}" ${ext}>Telegram botga yozish</a></div>
       </div>
       <div class="contact__retail panel">
         <p class="eyebrow">O‘zingiz uchun kitob</p>
         <h2>Donalab xarid qilmoqchimisiz?</h2>
-        <p>Uzum Marketdagi Falaq Nashr rasmiy do‘koniga o‘ting. Joriy narx, mavjudlik va yetkazib berish shartlarini o‘sha yerda tekshiring.</p>
+        <p>Uzum Marketdagi Falaq Nashr rasmiy do‘koniga o‘ting.</p>
         <div><a class="btn" href="${L.uzum}" ${ext}>Uzum Marketga o‘tish ${arrow}</a></div>
-        <p class="fine">Yaqin kitob do‘konlari haqida Telegram botimiz orqali so‘rashingiz mumkin.</p>
       </div>
     </section>
     <section class="form-wrap panel" id="yozish">
@@ -419,7 +404,7 @@
     const pages = Math.ceil(list.length / PRODUCTS_PER_PAGE);
     const page = Math.min(Math.max(st.p, 1), Math.max(pages, 1));
     const items = list.slice((page - 1) * PRODUCTS_PER_PAGE, page * PRODUCTS_PER_PAGE);
-    return `<p class="count">${list.length} ta mahsulot${pages > 1 ? ` · ${page}/${pages}-sahifa` : ""}</p>
+    return `<p class="count">${list.length} ta mahsulot</p>
       ${items.length ? `<div class="grid grid--4">${items.map(productCard).join("")}</div>` : `<p class="note">Hech narsa topilmadi.</p>`}
       ${pager(page, pages, (n) => shopHref({ ...st, p: n }))}`;
   }
@@ -427,19 +412,16 @@
   function shopPage(params) {
     if (!products) {
       getJSON("/api/products")
-        .then((d) => { products = d; if (location.hash.startsWith("#/dokon")) route(); })
-        .catch(() => { products = { products: [], failed: true }; route(); });
+        // lastPath reset: this second render is the same visit, so it should not jump to the list.
+        .then((d) => { products = d; lastPath = null; if (location.hash.startsWith("#/dokon")) route(); })
+        .catch(() => { products = { products: [], failed: true }; lastPath = null; route(); });
       return `${pageHero("Uzum Marketdagi kitoblar", "Yuklanmoqda…")}`;
     }
     const sh = D.shop;
     const list = products.products;
-    const synced = sh && sh.syncedAt ? new Date(sh.syncedAt).toLocaleDateString("ru-RU") : "";
-    const sub = list.length
-      ? `${list.length} ta mahsulot${synced ? ` · ${synced} holatiga` : ""}`
-      : "Mahsulotlar hali yuklanmagan.";
     if (!list.length) {
-      return `${pageHero("Uzum Marketdagi kitoblar", sub, "Onlayn do‘kon")}
-      <section class="section section--tight"><p class="note">Administrator Uzumdan ma’lumotlarni yangilagach, kitoblar shu yerda paydo bo‘ladi. Hozircha <a href="${L.uzum}" ${ext}>Uzum Marketda qidiring ${arrow}</a>.</p></section>`;
+      return `${pageHero("Uzum Marketdagi kitoblar", "", "Onlayn do‘kon")}
+      <section class="section section--tight"><p class="note"><a href="${L.uzum}" ${ext}>Kitoblarimizni Uzum Marketda ko‘ring ${arrow}</a></p></section>`;
     }
 
     const counts = new Map();
@@ -449,7 +431,7 @@
     if (!cats.some(([c]) => decode(c) === st.cat)) st.cat = "";
 
     return `
-    ${pageHero("Uzum Marketdagi kitoblar", sub, "Onlayn do‘kon")}
+    ${pageHero("Uzum Marketdagi kitoblar", "", "Onlayn do‘kon")}
     <section class="section section--tight">
       <div class="shop-tools list-top">
         <input id="shop-search" type="search" placeholder="Kitob nomi bo‘yicha qidirish" aria-label="Qidirish" value="${esc(st.q)}">
