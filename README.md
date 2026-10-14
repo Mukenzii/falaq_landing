@@ -29,6 +29,14 @@ On first start the backend creates the tables and loads the initial books, news 
 
 ## Uzum Market sync
 
+**With an API key (recommended):** put the key from seller.uzum.uz → API keys into `.env` as
+`UZUM_API_KEY` (and optionally `UZUM_SHOP_ID`), then `docker compose up -d`. The sync button then
+reads your products, prices and stock through the official Uzum Seller OpenAPI
+(`backend/src/uzum-seller.js`). Uzum's firewall may block requests from outside Uzbekistan; if the
+API fails, the sync falls back to reading the public shop page as described below.
+
+**Without a key:**
+
 In the admin panel, **Uzum → “Uzumdan yangilash”** runs `backend/src/uzum-scraper.js`:
 
 1. Opens `https://uzum.uz/uz/shop/<shop>` in headless Chromium and reuses the page's anonymous

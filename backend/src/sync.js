@@ -1,8 +1,10 @@
-// "Uzumdan yangilash": scrape the Uzum shop, store every product, and link books to products.
+// "Uzumdan yangilash": read the Uzum shop (Seller API, or the shop page), store every product,
+// and link books to products.
 // One sync at a time; progress is written to sync_runs so the admin page can poll it.
 
 import { pool, q } from "./db.js";
 import { scrapeUzum, normalize } from "./uzum-scraper.js";
+import { fetchSellerProducts } from "./uzum-seller.js";
 import { DEFAULT_UZUM } from "./seed.js";
 
 let running = null;
@@ -27,7 +29,19 @@ async function run(id) {
   try {
     const { rows } = await q("SELECT value FROM settings WHERE key = 'uzum'");
     const cfg = { ...DEFAULT_UZUM, ...(rows[0]?.value || {}) };
-    const { shop, source, products } = await scrapeUzum({ ...cfg, log });
+    // With UZUM_API_KEY set, the official Seller API is the source; the page scraper is the fallback.
+    let result = null;
+    if (process.env.UZUM_API_KEY) {
+      try {
+        result = await fetchSellerProducts({ key: process.env.UZUM_API_KEY, shopId: process.env.UZUM_SHOP_ID, log });
+      } catch (e) {
+        log(`Seller API xatosi: ${e.message}`);
+        log("Do‘kon sahifasidan o‘qishga o‘tilmoqda…");
+      }
+    } else {
+      log("UZUM_API_KEY berilmagan — do‘kon sahifasidan o‘qiladi.");
+    }
+    const { shop, source, products } = result || await scrapeUzum({ ...cfg, log });
 
     const c = await pool.connect();
     let matched = 0;

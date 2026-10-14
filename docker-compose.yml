@@ -26,6 +26,8 @@ services:
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:?Set ADMIN_PASSWORD in .env}
       SESSION_SECRET: ${SESSION_SECRET:?Set SESSION_SECRET in .env}
       SYNC_ON_START: ${SYNC_ON_START:-1}
+      UZUM_API_KEY: ${UZUM_API_KEY:-}
+      UZUM_SHOP_ID: ${UZUM_SHOP_ID:-}
     shm_size: 512mb # Chromium needs more than Docker's default 64 MB
     depends_on:
       db:

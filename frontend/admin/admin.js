@@ -97,7 +97,8 @@
             <div class="stat"><b>${last && last.matched != null ? last.matched : "—"}</b><span>Kitobga bog‘langan</span></div>
           </div>
           ${shop ? `<p class="muted">${esc(shop.title || "")}${shop.rating ? ` · ★ ${esc(shop.rating)}` : ""} · oxirgi yangilanish: ${when(shop.syncedAt)}${
-            shop.source === "search" ? ` · <b>manba: Uzum qidiruvi</b> (do‘kon sahifasi bo‘sh edi)` : ""}</p>` : ""}
+            shop.source === "search" ? ` · <b>manba: Uzum qidiruvi</b> (do‘kon sahifasi bo‘sh edi)`
+              : shop.source === "seller" ? ` · manba: Uzum Seller API` : ""}</p>` : ""}
         </div>
         <div class="card">
           <div class="row"><h2>Jarayon</h2>${last ? badge(last.status) : ""}</div>
