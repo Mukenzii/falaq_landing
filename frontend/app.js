@@ -158,7 +158,7 @@
     return `
     <section class="hero panel">
       <div class="hero__text">
-        <p class="eyebrow eyebrow--blue"><span class="dot"></span>Falaq Nashr</p>
+        <p class="eyebrow eyebrow--blue">Falaq Nashr</p>
         <h1>O‘qidingizmi, endi boshqa odamsiz.</h1>
         <p class="hero__lead">Falaq Nashr kitoblari bilan tanishing. O‘zingiz uchun mutolaa, yaqinlaringiz uchun mazmunli sovg‘a toping.</p>
         <div class="btn-row">

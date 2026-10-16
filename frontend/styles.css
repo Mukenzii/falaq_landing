@@ -65,7 +65,6 @@ p { margin: 0; }
 .eyebrow--sky { color: var(--sky); }
 .eyebrow--plain { text-transform: none; letter-spacing: .02em; }
 .eyebrow a:hover { text-decoration: underline; }
-.dot { width: 6px; height: 6px; border-radius: 50%; background: #e3a23a; }
 .more { color: var(--blue); font-size: .85rem; font-weight: 500; display: inline-flex; gap: .3em; }
 .more:hover, .link-more:hover { text-decoration: underline; }
 .link-more { color: var(--blue); font-weight: 500; font-size: .95rem; }
