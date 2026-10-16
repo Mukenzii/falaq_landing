@@ -9,9 +9,11 @@ services:
     environment:
       POSTGRES_DB: falaq
       POSTGRES_USER: falaq
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-falaq}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
     volumes:
       - db-data:/var/lib/postgresql/data
+    security_opt:
+      - no-new-privileges:true
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U falaq -d falaq"]
       interval: 5s
@@ -22,13 +24,19 @@ services:
     build: ./backend
     restart: unless-stopped
     environment:
-      DATABASE_URL: postgres://falaq:${POSTGRES_PASSWORD:-falaq}@db:5432/falaq
+      DATABASE_URL: postgres://falaq:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@db:5432/falaq
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:?Set ADMIN_PASSWORD in .env}
       SESSION_SECRET: ${SESSION_SECRET:?Set SESSION_SECRET in .env}
       SYNC_ON_START: ${SYNC_ON_START:-1}
       UZUM_API_KEY: ${UZUM_API_KEY:-}
       UZUM_SHOP_ID: ${UZUM_SHOP_ID:-}
     shm_size: 512mb # Chromium needs more than Docker's default 64 MB
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop: [ALL]
+    security_opt:
+      - no-new-privileges:true
     depends_on:
       db:
         condition: service_healthy
@@ -37,7 +45,13 @@ services:
     build: ./frontend
     restart: unless-stopped
     ports:
-      - "${PORT:-8080}:80"
+      - "${PORT:-8080}:8080"
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop: [ALL]
+    security_opt:
+      - no-new-privileges:true
     depends_on:
       backend:
         condition: service_healthy
@@ -48,7 +62,7 @@ services:
     image: adminer:4
     profiles: ["tools"]
     ports:
-      - "8081:8080"
+      - "127.0.0.1:8081:8080" # reachable from this machine only
     environment:
       ADMINER_DEFAULT_SERVER: db
     depends_on:
