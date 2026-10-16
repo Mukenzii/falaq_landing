@@ -131,9 +131,30 @@
   }
 
   /* ---------- pages ---------- */
+  // Home rows show what can be bought on Uzum right now: the row's chosen books that are in
+  // stock, then other in-stock books, then in-stock Uzum shop products not yet on the site.
+  // Sold-out books fill a row only when nothing in stock is left.
+  const inStock = (b) => !!(b.uzum && b.uzum.inStock);
+  function homeRow(chosen, used, count = 4) {
+    const books = [...chosen, ...D.books].filter((b, i, all) => all.indexOf(b) === i && !used.has("b" + b.slug));
+    const cards = [];
+    const take = (key, html) => { used.add(key); cards.push(html); };
+    for (const b of books) if (cards.length < count && inStock(b)) take("b" + b.slug, bookCard(b));
+    if (cards.length < count) {
+      if (!products) loadProducts(); // the home page redraws with shop products once they arrive
+      const linked = new Set(D.books.map((b) => b.uzum && b.uzum.id));
+      for (const p of products ? products.products : []) {
+        if (cards.length < count && p.inStock && !linked.has(p.id) && !used.has("p" + p.id)) take("p" + p.id, productCard(p));
+      }
+    }
+    for (const b of books) if (cards.length < count && !used.has("b" + b.slug)) take("b" + b.slug, bookCard(b));
+    return cards.join("");
+  }
+
   function home() {
-    const featured = D.books.filter((b) => b.featured);
-    const more = D.books.filter((b) => b.more);
+    const used = new Set();
+    const featuredRow = homeRow(D.books.filter((b) => b.featured), used);
+    const moreRow = homeRow(D.books.filter((b) => b.more), used);
     return `
     <section class="hero panel">
       <div class="hero__text">
@@ -156,7 +177,7 @@
         <div><p class="eyebrow">Falaq Nashr kitoblari</p><h2>Mutolaa uchun tanlov</h2></div>
         <a class="btn btn--sm" href="#/kitoblar/tanlov">Barcha kitoblar</a>
       </div>
-      <div class="grid grid--4">${featured.map(bookCard).join("")}</div>
+      <div class="grid grid--4">${featuredRow}</div>
     </section>
 
     <section class="section">
@@ -172,7 +193,7 @@
 
     <section class="section">
       <div class="section__head"><div><p class="eyebrow">Yangi mutolaaga qadam</p><h2>Yana tanishib chiqing</h2></div></div>
-      <div class="grid grid--4">${more.map(bookCard).join("")}</div>
+      <div class="grid grid--4">${moreRow}</div>
     </section>
 
     <section class="section">
@@ -406,12 +427,26 @@
       ${pager(page, pages, (n) => shopHref({ ...st, p: n }))}`;
   }
 
+  // Uzum shop products are loaded once, by the first page that needs them, which then redraws.
+  let productsLoading = false;
+  function loadProducts() {
+    if (products || productsLoading) return;
+    productsLoading = true;
+    getJSON("/api/products")
+      .then((d) => { products = d; })
+      .catch(() => { products = { products: [], failed: true }; })
+      .finally(() => {
+        productsLoading = false;
+        const hash = location.hash.replace(/^#\/?/, "");
+        // lastPath reset: this second render is the same visit, so it should not jump to the list.
+        if (hash.startsWith("dokon")) { lastPath = null; route(); }
+        else if (hash === "") $app.innerHTML = home(); // redraw rows in place, keeping the scroll position
+      });
+  }
+
   function shopPage(params) {
     if (!products) {
-      getJSON("/api/products")
-        // lastPath reset: this second render is the same visit, so it should not jump to the list.
-        .then((d) => { products = d; lastPath = null; if (location.hash.startsWith("#/dokon")) route(); })
-        .catch(() => { products = { products: [], failed: true }; lastPath = null; route(); });
+      loadProducts();
       return `${pageHero("Uzum Marketdagi kitoblar", "Yuklanmoqda…")}`;
     }
     const sh = D.shop;
@@ -504,6 +539,12 @@
   }
 
   /* ---------- interactions ---------- */
+  // The navbar's glass and blur appear once content scrolls underneath it.
+  const header = document.querySelector(".site-header");
+  const onScroll = () => header.classList.toggle("is-scrolled", window.scrollY > 4);
+  window.addEventListener("scroll", onScroll, { passive: true });
+  onScroll();
+
   function updateFavCount() {
     const badge = document.getElementById("fav-count");
     badge.textContent = favs.length;
