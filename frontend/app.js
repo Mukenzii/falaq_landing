@@ -118,7 +118,7 @@
   const pageOf = (params, pages) => Math.min(Math.max(parseInt(params.get("p"), 10) || 1, 1), Math.max(pages, 1));
 
   function wholesaleBand() {
-    return `<section class="band">
+    return `
       <div class="band__text">
         <p class="eyebrow eyebrow--sky">Kitob do‘konlari uchun</p>
         <h2>Falaq kitoblari sizning do‘koningizda.</h2>
@@ -127,8 +127,7 @@
       <div class="band__contact">
         ${D.phones.map((p) => `<a class="band__phone" href="${tel(p)}">${p}</a>`).join("")}
         <a class="btn btn--light" href="${L.telegram}" ${ext}>Telegram orqali yozish</a>
-      </div>
-    </section>`;
+      </div>`;
   }
 
   /* ---------- pages ---------- */
@@ -190,8 +189,7 @@
           <a class="more" href="${L.telegram}" ${ext}>Telegramda o‘qish ${arrow}</a>
         </article>`).join("")}
       </div>
-    </section>
-    ${wholesaleBand()}`;
+    </section>`;
   }
 
   function about() {
@@ -206,8 +204,7 @@
         <p>Kitoblarimizni kitob do‘konlaridan yoki Uzum Marketdagi rasmiy sahifamizdan xarid qilishingiz mumkin. Kitob do‘konlari uchun ulgurji savdo ham mavjud.</p>
         <div><a class="btn" href="${L.telegram}" ${ext}>Rasmiy kanalimiz</a></div>
       </div>
-    </section>
-    ${wholesaleBand()}`;
+    </section>`;
   }
 
   const lists = {
@@ -490,6 +487,9 @@
     else html = notFound();
 
     $app.innerHTML = html;
+    // Wholesale contact lives in the footer, so the page has one dark block at the bottom.
+    const cta = document.getElementById("footer-cta");
+    if (cta && !cta.childElementCount) cta.innerHTML = wholesaleBand();
     document.title = (title || titles[""]) + " — Falaq Nashr";
     document.querySelectorAll("[data-nav]").forEach((el) => {
       el.classList.toggle("active", el.dataset.nav === nav);
