@@ -158,7 +158,6 @@
     return `
     <section class="hero panel">
       <div class="hero__text">
-        <p class="eyebrow eyebrow--blue">Falaq Nashr</p>
         <h1>O‘qidingizmi, endi boshqa odamsiz.</h1>
         <p class="hero__lead">Falaq Nashr kitoblari bilan tanishing. O‘zingiz uchun mutolaa, yaqinlaringiz uchun mazmunli sovg‘a toping.</p>
         <div class="btn-row">
@@ -168,9 +167,6 @@
       </div>
       <a class="hero__img" href="#/yangilik/binafsha-lotin"><img src="assets/news/binafsha-lotin.jpg" alt="Binafsha shu’lasi lotin yozuvida sotuvda"></a>
     </section>
-    <ul class="facts">
-      <li>O‘zbek tilidagi kitoblar</li><li>Uzum Marketda mavjud</li><li>Kitob do‘konlarida sotuvda</li><li>Ulgurji hamkorlik</li>
-    </ul>
 
     <section class="section">
       <div class="section__head">
