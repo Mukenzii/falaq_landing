@@ -57,6 +57,35 @@ p { margin: 0; }
 .btn--light:hover { background: var(--surface); }
 .btn-row { display: flex; flex-wrap: wrap; gap: 12px; }
 
+/* Hero buttons (data-go in app.js): pressed feel, a ripple from the press point, the arrow darts ahead. */
+.btn[data-go] { position: relative; overflow: hidden; isolation: isolate; }
+.btn[data-go]:active, .btn[data-go].is-going { transform: scale(.97); }
+.btn__arrow { display: inline-block; transition: transform .2s ease; }
+.btn[data-go]:hover .btn__arrow { transform: translateX(3px); }
+.btn.is-going .btn__arrow { animation: arrow-go .34s cubic-bezier(.5, 0, .2, 1) both; }
+.btn__ripple {
+  position: absolute; z-index: -1; left: var(--x); top: var(--y);
+  width: var(--size); height: var(--size); margin: calc(var(--size) / -2) 0 0 calc(var(--size) / -2);
+  border-radius: 50%; background: currentColor; opacity: .25; pointer-events: none;
+  transform: scale(0); animation: ripple .6s ease-out forwards;
+}
+.btn--ghost .btn__ripple { opacity: .12; }
+@keyframes ripple { to { transform: scale(1); opacity: 0; } }
+@keyframes arrow-go {
+  45% { transform: translateX(16px); opacity: 0; }
+  46% { transform: translateX(-12px); opacity: 0; }
+  100% { transform: none; opacity: 1; }
+}
+
+/* The page change that follows: the current page lifts away, the next one rises in.
+   The header keeps its own layer (vt-page is set only while the transition runs). */
+.vt-page .site-header { view-transition-name: site-header; }
+::view-transition-old(root) { animation: page-out .2s ease-in both; }
+::view-transition-new(root) { animation: page-in .42s cubic-bezier(.2, .7, .2, 1) .06s both; }
+#app.page-enter { animation: page-in .42s cubic-bezier(.2, .7, .2, 1) both; }
+@keyframes page-out { to { opacity: 0; transform: translateY(-14px); } }
+@keyframes page-in { from { opacity: 0; transform: translateY(18px); } }
+
 .eyebrow {
   font: 400 .74rem/1.4 var(--mono); text-transform: uppercase; letter-spacing: .1em; color: var(--muted);
   display: flex; align-items: center; gap: .5em;

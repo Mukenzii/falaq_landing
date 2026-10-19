@@ -161,8 +161,8 @@
         <h1>O‘qidingizmi, endi boshqa odamsiz.</h1>
         <p class="hero__lead">Falaq Nashr kitoblari bilan tanishing. O‘zingiz uchun mutolaa, yaqinlaringiz uchun mazmunli sovg‘a toping.</p>
         <div class="btn-row">
-          <a class="btn" href="#/kitoblar">Kitoblarni ko‘rish <span aria-hidden="true">→</span></a>
-          <a class="btn btn--ghost" href="#/aloqa">Ulgurji savdo <span aria-hidden="true">→</span></a>
+          <a class="btn" href="#/kitoblar" data-go>Kitoblarni ko‘rish <span class="btn__arrow" aria-hidden="true">→</span></a>
+          <a class="btn btn--ghost" href="#/aloqa" data-go>Ulgurji savdo <span class="btn__arrow" aria-hidden="true">→</span></a>
         </div>
       </div>
       <a class="hero__img" href="#/yangilik/binafsha-lotin"><img src="assets/news/binafsha-lotin.jpg" alt="Binafsha shu’lasi lotin yozuvida sotuvda"></a>
@@ -582,6 +582,40 @@
     }
   });
   document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeMenus(); });
+
+  // Hero buttons (data-go): a ripple from the press point and the arrow darting ahead, then the
+  // next page slides in. View Transitions where the browser has them, a CSS entrance otherwise.
+  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+  document.addEventListener("click", (e) => {
+    const btn = e.target.closest("a[data-go]");
+    if (!btn || reduceMotion.matches || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+    e.preventDefault();
+    if (btn.classList.contains("is-going")) return;
+
+    const r = btn.getBoundingClientRect();
+    const ripple = document.createElement("span");
+    ripple.className = "btn__ripple";
+    // Keyboard presses (detail 0) have no pointer position: start from the centre.
+    ripple.style.setProperty("--x", `${e.detail ? e.clientX - r.left : r.width / 2}px`);
+    ripple.style.setProperty("--y", `${e.detail ? e.clientY - r.top : r.height / 2}px`);
+    ripple.style.setProperty("--size", `${Math.hypot(r.width, r.height) * 2}px`);
+    btn.append(ripple);
+    btn.classList.add("is-going");
+
+    setTimeout(() => {
+      history.pushState(null, "", btn.getAttribute("href"));
+      if (document.startViewTransition) {
+        document.documentElement.classList.add("vt-page");
+        document.startViewTransition(route).finished.finally(() => document.documentElement.classList.remove("vt-page"));
+      } else {
+        route();
+        $app.classList.remove("page-enter");
+        void $app.offsetWidth; // restart the animation
+        $app.classList.add("page-enter");
+      }
+    }, 180);
+  });
+  $app.addEventListener("animationend", (e) => { if (e.target === $app) $app.classList.remove("page-enter"); });
 
   document.addEventListener("input", (e) => {
     if (e.target.id !== "shop-search") return;
