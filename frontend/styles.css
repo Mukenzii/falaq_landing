@@ -141,6 +141,7 @@ p { margin: 0; }
   .site-header::before { background: color-mix(in srgb, var(--bg) 96%, transparent); }
 }
 .logo { color: var(--blue); justify-self: start; display: block; }
+.logo img { display: block; width: auto; height: 52px; }
 .main-nav { display: flex; align-items: center; gap: clamp(16px, 2.4vw, 34px); font-size: .95rem; color: var(--navy); }
 .main-nav > a, .dd > button { position: relative; padding: 6px 0; }
 .main-nav > a.active, .dd > button.active { color: var(--blue); }
