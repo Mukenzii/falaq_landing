@@ -321,8 +321,10 @@
   function newsPage(slug) {
     const n = newsItem(slug);
     if (!n) return notFound();
-    const cta = n.app
-      ? `<a class="btn" href="${L.googlePlay}" ${ext}>Google Play’da ko‘rish ${arrow}</a>`
+    // App news: a button for each store whose link is set in the admin settings.
+    const stores = [[L.googlePlay, "Google Play’da ko‘rish"], [L.appStore, "App Store’da ko‘rish"]].filter(([href]) => href);
+    const cta = n.app && stores.length
+      ? stores.map(([href, label]) => `<a class="btn" href="${href}" ${ext}>${label} ${arrow}</a>`).join("")
       : `<a class="btn" href="${L.telegram}" ${ext}>Telegramda o‘qish ${arrow}</a>`;
     return `
     <section class="page-hero panel">

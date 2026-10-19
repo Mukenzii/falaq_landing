@@ -11,6 +11,8 @@ window.FALAQ = {
     // TODO: replace with the Telegram bot URL
     telegramBot: "https://t.me/falaqnashr",
     googlePlay: "https://play.google.com/store/search?q=falaq%20nashr&c=apps",
+    // App Store page of the app; its button appears on app news once this is set
+    appStore: "",
   },
   phones: ["+998 93 194 91 31", "+998 94 194 91 31"],
 

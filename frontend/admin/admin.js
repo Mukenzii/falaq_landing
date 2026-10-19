@@ -284,7 +284,7 @@
       { key: "summary", label: "Qisqacha", type: "textarea", rows: 2 },
       { key: "body", label: "Matn", type: "textarea", rows: 6 },
       { key: "sort", label: "Tartib", type: "number" },
-      { key: "app", label: "Ilova haqida (Google Play tugmasi)", type: "checkbox" },
+      { key: "app", label: "Ilova haqida (Google Play va App Store tugmalari)", type: "checkbox" },
     ];
     const open = (n) => edit({
       title: n ? "Yangilikni tahrirlash" : "Yangi yangilik",
@@ -343,7 +343,7 @@
     const s = await api("/admin/settings");
     const links = s.links || {};
     const uzum = s.uzum || {};
-    const linkKeys = [["telegram", "Telegram kanal"], ["telegramBot", "Telegram bot"], ["instagram", "Instagram"], ["youtube", "YouTube"], ["uzum", "Uzum do‘kon havolasi"], ["googlePlay", "Google Play"]];
+    const linkKeys = [["telegram", "Telegram kanal"], ["telegramBot", "Telegram bot"], ["instagram", "Instagram"], ["youtube", "YouTube"], ["uzum", "Uzum do‘kon havolasi"], ["googlePlay", "Google Play"], ["appStore", "App Store"]];
     $view.innerHTML = `
       <h1>Sozlamalar</h1>
       <form id="settings-form" class="settings">

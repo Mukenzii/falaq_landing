@@ -319,7 +319,8 @@ p { margin: 0; }
 .article__img { width: min(100%, 520px); margin-inline: auto; }
 .article__img.is-app { border-radius: 4px; }
 .article__body { font-size: 1.15rem; line-height: 1.65; color: var(--text); }
-.article__cta { display: flex; justify-content: center; }
+.article__cta { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; }
+.article__cta .btn { justify-content: center; min-width: min(100%, 250px); }
 
 /* ---------- contact ---------- */
 .contact { display: grid; grid-template-columns: 1fr 1fr; gap: clamp(28px, 5vw, 64px); align-items: start; margin: clamp(48px, 6vw, 80px) auto; }
