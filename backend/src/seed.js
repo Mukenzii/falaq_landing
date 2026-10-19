@@ -1,5 +1,6 @@
 // First-run content: the books, news and links the static site shipped with (seed/data.js).
-// Runs only when the database has no books yet, so edits made in the admin panel are never lost.
+// Content is inserted only when the database has no books yet, so edits made in the admin panel
+// are never lost; link fields added later are filled in without touching existing ones.
 
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
@@ -8,13 +9,19 @@ import { pool, q } from "./db.js";
 
 export const DEFAULT_UZUM = { shop: "falaqnashr", fallbackQuery: "falaq nashr", fallbackMatch: "falaq" };
 
-export async function seed() {
-  const { rows } = await q("SELECT count(*)::int AS n FROM books");
-  if (rows[0].n > 0) return false;
-
+function loadSeed() {
   const sandbox = { window: {} };
   vm.runInNewContext(readFileSync(fileURLToPath(new URL("../seed/data.js", import.meta.url)), "utf8"), sandbox);
-  const D = sandbox.window.FALAQ;
+  return sandbox.window.FALAQ;
+}
+
+export async function seed() {
+  const D = loadSeed();
+  // Link fields added in later versions get their seed value; links edited in the admin stay as they are.
+  await q("UPDATE settings SET value = $1::jsonb || value WHERE key = 'links'", [JSON.stringify(D.links)]);
+
+  const { rows } = await q("SELECT count(*)::int AS n FROM books");
+  if (rows[0].n > 0) return false;
 
   const c = await pool.connect();
   try {
