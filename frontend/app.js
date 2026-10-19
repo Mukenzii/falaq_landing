@@ -161,8 +161,8 @@
         <h1>O‘qidingizmi, endi boshqa odamsiz.</h1>
         <p class="hero__lead">Falaq Nashr kitoblari bilan tanishing. O‘zingiz uchun mutolaa, yaqinlaringiz uchun mazmunli sovg‘a toping.</p>
         <div class="btn-row">
-          <a class="btn" href="#/kitoblar" data-go>Kitoblarni ko‘rish <span class="btn__arrow" aria-hidden="true">→</span></a>
-          <a class="btn btn--ghost" href="#/aloqa" data-go>Ulgurji savdo <span class="btn__arrow" aria-hidden="true">→</span></a>
+          <a class="btn" href="#/kitoblar">Kitoblarni ko‘rish <span class="btn__arrow" aria-hidden="true">→</span></a>
+          <a class="btn btn--ghost" href="#/aloqa">Ulgurji savdo <span class="btn__arrow" aria-hidden="true">→</span></a>
         </div>
       </div>
       <a class="hero__img" href="#/yangilik/binafsha-lotin"><img src="assets/news/binafsha-lotin.jpg" alt="Binafsha shu’lasi lotin yozuvida sotuvda"></a>
@@ -583,38 +583,55 @@
   });
   document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeMenus(); });
 
-  // Hero buttons (data-go): a ripple from the press point and the arrow darting ahead, then the
-  // next page slides in. View Transitions where the browser has them, a CSS entrance otherwise.
+  // Buttons and menu items answer a press with a ripple from the press point (arrows dart ahead).
+  // Links inside the site wait a beat so the press reads, then the page changes (see hashchange).
   const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+  const PRESSABLE = ".btn, .dd__menu a, .fav-link, .pager__btn, .catalog__side a, .menu-open .main-nav > a";
   document.addEventListener("click", (e) => {
-    const btn = e.target.closest("a[data-go]");
-    if (!btn || reduceMotion.matches || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
-    e.preventDefault();
-    if (btn.classList.contains("is-going")) return;
+    const el = e.target.closest(PRESSABLE);
+    if (!el || reduceMotion.matches) return;
 
-    const r = btn.getBoundingClientRect();
+    const r = el.getBoundingClientRect();
     const ripple = document.createElement("span");
-    ripple.className = "btn__ripple";
+    ripple.className = "ripple";
     // Keyboard presses (detail 0) have no pointer position: start from the centre.
     ripple.style.setProperty("--x", `${e.detail ? e.clientX - r.left : r.width / 2}px`);
     ripple.style.setProperty("--y", `${e.detail ? e.clientY - r.top : r.height / 2}px`);
     ripple.style.setProperty("--size", `${Math.hypot(r.width, r.height) * 2}px`);
-    btn.append(ripple);
-    btn.classList.add("is-going");
+    ripple.addEventListener("animationend", () => ripple.remove());
+    el.append(ripple);
 
+    const href = el.getAttribute("href") || "";
+    if (!href.startsWith("#/") || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+    e.preventDefault();
+    if (el.classList.contains("is-going")) return;
+    el.classList.add("is-going");
     setTimeout(() => {
-      history.pushState(null, "", btn.getAttribute("href"));
-      if (document.startViewTransition) {
-        document.documentElement.classList.add("vt-page");
-        document.startViewTransition(route).finished.finally(() => document.documentElement.classList.remove("vt-page"));
-      } else {
-        route();
-        $app.classList.remove("page-enter");
-        void $app.offsetWidth; // restart the animation
-        $app.classList.add("page-enter");
-      }
-    }, 180);
+      location.hash = href;
+      // Elements that stay on screen (header, menus) go back to rest once the page has changed.
+      setTimeout(() => el.classList.remove("is-going"), 450);
+    }, 160);
   });
+
+  // Every page change (links, menus, Back/Forward) lifts the current page away and brings the next
+  // one in: View Transitions where the browser has them, a CSS entrance otherwise. Paging or
+  // filtering the same list updates in place.
+  let pageTransition = null;
+  function changePage() {
+    const path = location.hash.replace(/^#\/?/, "").split("?")[0];
+    if (reduceMotion.matches || path === lastPath) return route();
+    if (document.startViewTransition) {
+      const root = document.documentElement;
+      root.classList.add("vt-page");
+      const t = (pageTransition = document.startViewTransition(route));
+      t.finished.finally(() => { if (pageTransition === t) root.classList.remove("vt-page"); });
+    } else {
+      route();
+      $app.classList.remove("page-enter");
+      void $app.offsetWidth; // restart the animation
+      $app.classList.add("page-enter");
+    }
+  }
   $app.addEventListener("animationend", (e) => { if (e.target === $app) $app.classList.remove("page-enter"); });
 
   document.addEventListener("input", (e) => {
@@ -657,6 +674,6 @@
   });
 
   document.getElementById("year").textContent = new Date().getFullYear();
-  window.addEventListener("hashchange", route);
+  window.addEventListener("hashchange", changePage);
   route();
 })();

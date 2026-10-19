@@ -48,7 +48,6 @@ p { margin: 0; }
   transition: background .2s, transform .2s;
 }
 .btn:hover { background: var(--blue-dark); }
-.btn:active { transform: translateY(1px); }
 .btn--sm { font-size: .72rem; padding: .95em 1.2em; }
 .btn--ghost, .btn--outline { background: var(--bg); color: var(--blue); }
 .btn--ghost { color: var(--navy); border-color: var(--line); }
@@ -57,19 +56,21 @@ p { margin: 0; }
 .btn--light:hover { background: var(--surface); }
 .btn-row { display: flex; flex-wrap: wrap; gap: 12px; }
 
-/* Hero buttons (data-go in app.js): pressed feel, a ripple from the press point, the arrow darts ahead. */
-.btn[data-go] { position: relative; overflow: hidden; isolation: isolate; }
-.btn[data-go]:active, .btn[data-go].is-going { transform: scale(.97); }
+/* Press feedback (app.js): buttons and menu items ripple from the press point, arrows dart ahead. */
+.btn, .dd__menu a, .fav-link, .pager__btn, .catalog__side a { position: relative; overflow: hidden; isolation: isolate; }
+.btn:active, .btn.is-going { transform: scale(.97); }
 .btn__arrow { display: inline-block; transition: transform .2s ease; }
-.btn[data-go]:hover .btn__arrow { transform: translateX(3px); }
+.btn:hover .btn__arrow { transform: translateX(3px); }
 .btn.is-going .btn__arrow { animation: arrow-go .34s cubic-bezier(.5, 0, .2, 1) both; }
-.btn__ripple {
+.ripple {
   position: absolute; z-index: -1; left: var(--x); top: var(--y);
   width: var(--size); height: var(--size); margin: calc(var(--size) / -2) 0 0 calc(var(--size) / -2);
   border-radius: 50%; background: currentColor; opacity: .25; pointer-events: none;
   transform: scale(0); animation: ripple .6s ease-out forwards;
 }
-.btn--ghost .btn__ripple { opacity: .12; }
+.btn--ghost .ripple, .btn--outline .ripple, .btn--light .ripple, .dd__menu .ripple, .fav-link .ripple,
+.pager__btn .ripple, .catalog__side .ripple, .main-nav .ripple { opacity: .12; }
+.catalog__side .ripple { display: none; } /* plain text list on wide screens; pills on narrow ones */
 @keyframes ripple { to { transform: scale(1); opacity: 0; } }
 @keyframes arrow-go {
   45% { transform: translateX(16px); opacity: 0; }
@@ -77,7 +78,14 @@ p { margin: 0; }
   100% { transform: none; opacity: 1; }
 }
 
-/* The page change that follows: the current page lifts away, the next one rises in.
+/* Main menu: a bar grows under the pressed link and stays under the current page. */
+.main-nav > a::after, .dd > button::after {
+  content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 2px; border-radius: 2px;
+  background: var(--blue); transform: scaleX(0); transition: transform .3s cubic-bezier(.2, .7, .2, 1);
+}
+.main-nav > a.active::after, .dd > button.active::after, .main-nav > a:active::after { transform: none; }
+
+/* Page changes: the current page lifts away, the next one rises in.
    The header keeps its own layer (vt-page is set only while the transition runs). */
 .vt-page .site-header { view-transition-name: site-header; }
 ::view-transition-old(root) { animation: page-out .2s ease-in both; }
@@ -400,6 +408,8 @@ a.pager__btn:hover { background: var(--surface); border-color: var(--blue); colo
   }
   .menu-open .main-nav { display: flex; }
   .main-nav > a, .dd > button { padding: 12px; width: 100%; text-align: left; }
+  .main-nav > a { border-radius: 8px; overflow: hidden; isolation: isolate; }
+  .main-nav > a::after, .dd > button::after { display: none; } /* the open menu ripples instead */
   .dd__menu { position: static; box-shadow: none; border: 0; padding: 0 0 0 12px; min-width: 0; }
   .hero, .about, .book, .book-more, .contact, .footer-cta { grid-template-columns: 1fr; }
   .hero__img { justify-self: center; }
@@ -407,6 +417,7 @@ a.pager__btn:hover { background: var(--surface); border-color: var(--blue); colo
   .catalog__side ul { flex-direction: row; flex-wrap: wrap; gap: 8px; }
   .catalog__side a { display: block; padding: 8px 14px; border: 1px solid var(--line); border-radius: 999px; font-size: .88rem; }
   .catalog__side a.active { border-color: var(--blue); }
+  .catalog__side .ripple { display: block; }
   .book__info { padding-top: 0; }
   .grid--3 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .footer-cols { grid-template-columns: repeat(2, minmax(0, 1fr)); }
