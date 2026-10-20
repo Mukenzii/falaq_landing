@@ -18,7 +18,7 @@
   --radius: 18px;
   --wrap: 1200px;
   --gutter: 16px;
-  --page: 1440px; /* widest panel (hero card, footer); the header aligns to --wrap */
+  --page: 1440px; /* widest panel (hero card, footer); the header aligns to it */
   color-scheme: light;
 }
 
@@ -114,8 +114,8 @@ p { margin: 0; }
 .site-header {
   position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20;
   display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 16px;
-  /* Logo and contact button line up with the text column (--wrap), not the screen edge. */
-  padding: 12px max(var(--gutter), 1vw, calc((100% - var(--wrap)) / 2));
+  /* Logo and contact button line up with the edges of the grey hero card (the --page panel). */
+  padding: 12px max(var(--gutter), 1vw, calc((100% - var(--page)) / 2));
   isolation: isolate;
 }
 /* Glass tint: translucent white with a soft top sheen, a hairline edge and a faint shadow.
