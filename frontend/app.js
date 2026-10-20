@@ -40,6 +40,10 @@
 
   /* Price and stock synced from Uzum Market by the admin "Uzumdan yangilash" button */
   const uzumFor = (b) => b.uzum || null;
+  // Lists show only books in stock on Uzum Market right now. A sold-out or unlinked book keeps
+  // its own page (old links still work) but leaves every list.
+  const onSale = (b) => !!(b.uzum && b.uzum.inStock);
+  const forSale = D.books.filter(onSale);
   const som = (n) => n.toLocaleString("ru-RU").replace(/\s/g, " ") + " so‘m";
   const stockBadge = (u) =>
     `<span class="stock ${u.inStock ? "stock--in" : "stock--out"}">${u.inStock ? "Sotuvda" : "Tugagan"}</span>`;
@@ -131,15 +135,13 @@
   }
 
   /* ---------- pages ---------- */
-  // Home rows show what can be bought on Uzum right now: the row's chosen books that are in
-  // stock, then other in-stock books, then in-stock Uzum shop products not yet on the site.
-  // Sold-out books fill a row only when nothing in stock is left.
-  const inStock = (b) => !!(b.uzum && b.uzum.inStock);
+  // Home rows show what can be bought on Uzum right now: the row's chosen books on sale, then
+  // other books on sale, then in-stock Uzum shop products not yet on the site.
   function homeRow(chosen, used, count = 4) {
-    const books = [...chosen, ...D.books].filter((b, i, all) => all.indexOf(b) === i && !used.has("b" + b.slug));
+    const books = [...chosen, ...forSale].filter((b, i, all) => all.indexOf(b) === i && !used.has("b" + b.slug));
     const cards = [];
     const take = (key, html) => { used.add(key); cards.push(html); };
-    for (const b of books) if (cards.length < count && inStock(b)) take("b" + b.slug, bookCard(b));
+    for (const b of books) if (cards.length < count) take("b" + b.slug, bookCard(b));
     if (cards.length < count) {
       if (!products) loadProducts(); // the home page redraws with shop products once they arrive
       const linked = new Set(D.books.map((b) => b.uzum && b.uzum.id));
@@ -147,14 +149,13 @@
         if (cards.length < count && p.inStock && !linked.has(p.id) && !used.has("p" + p.id)) take("p" + p.id, productCard(p));
       }
     }
-    for (const b of books) if (cards.length < count && !used.has("b" + b.slug)) take("b" + b.slug, bookCard(b));
     return cards.join("");
   }
 
   function home() {
     const used = new Set();
-    const featuredRow = homeRow(D.books.filter((b) => b.featured), used);
-    const moreRow = homeRow(D.books.filter((b) => b.more), used);
+    const featuredRow = homeRow(forSale.filter((b) => b.featured), used);
+    const moreRow = homeRow(forSale.filter((b) => b.more), used);
     return `
     <section class="hero panel">
       <div class="hero__text">
@@ -168,13 +169,13 @@
       <a class="hero__img" href="#/yangilik/binafsha-lotin"><img src="assets/news/binafsha-lotin.jpg" alt="Binafsha shu’lasi lotin yozuvida sotuvda"></a>
     </section>
 
-    <section class="section">
+    ${featuredRow ? `<section class="section">
       <div class="section__head">
         <div><p class="eyebrow">Falaq Nashr kitoblari</p><h2>Mutolaa uchun tanlov</h2></div>
         <a class="btn btn--sm" href="#/kitoblar/tanlov">Barcha kitoblar</a>
       </div>
       <div class="grid grid--4">${featuredRow}</div>
-    </section>
+    </section>` : ""}
 
     <section class="section">
       <div class="section__head"><div><p class="eyebrow">O‘zingizga mos kitob</p><h2>Qaysi mavzu sizga yaqin?</h2></div></div>
@@ -187,10 +188,10 @@
       </div>
     </section>
 
-    <section class="section">
+    ${moreRow ? `<section class="section">
       <div class="section__head"><div><p class="eyebrow">Yangi mutolaaga qadam</p><h2>Yana tanishib chiqing</h2></div></div>
       <div class="grid grid--4">${moreRow}</div>
-    </section>
+    </section>` : ""}
 
     <section class="section">
       <div class="section__head">
@@ -237,7 +238,7 @@
   function catalog(key, params) {
     const l = lists[key];
     if (!l) return notFound();
-    const all = D.books.filter(l.filter);
+    const all = forSale.filter(l.filter);
     const pages = Math.ceil(all.length / BOOKS_PER_PAGE);
     const page = pageOf(params, pages);
     const items = all.slice((page - 1) * BOOKS_PER_PAGE, page * BOOKS_PER_PAGE);
@@ -249,8 +250,8 @@
     <section class="catalog">
       <nav class="catalog__side" aria-label="Kitob bo‘limlari"><p class="eyebrow">Kitoblar</p><ul>${side}</ul></nav>
       <div class="catalog__main">
-        <p class="count list-top">${all.length} ta kitob</p>
-        <div class="grid grid--3">${items.map(bookCard).join("")}</div>
+        ${all.length ? `<p class="count list-top">${all.length} ta kitob</p>
+        <div class="grid grid--3">${items.map(bookCard).join("")}</div>` : `<p class="note list-top">Hozircha bu bo‘limda sotuvdagi kitob yo‘q.</p>`}
         ${pager(page, pages, (n) => `#/kitoblar${key ? "/" + key : ""}${n > 1 ? "?p=" + n : ""}`)}
       </div>
     </section>`;
@@ -277,7 +278,7 @@
         <div class="book__actions">
           <a class="btn" href="${u ? u.url : L.uzum}" ${ext}>${u && u.inStock ? "Uzum Marketda xarid qilish" : "Uzum Marketda ko‘rish"} ${arrow}</a>
           <a class="btn btn--outline" href="#/aloqa">Ulgurji xarid uchun</a>
-          ${favButton(b.slug)}
+          ${onSale(b) ? favButton(b.slug) : ""}
         </div>
       </div>
     </section>
@@ -295,11 +296,13 @@
   }
 
   function authorPage(slug) {
-    const items = D.books.filter((b) => slugify(b.author) === slug);
-    if (!items.length) return notFound();
+    const all = D.books.filter((b) => slugify(b.author) === slug);
+    if (!all.length) return notFound();
+    const items = all.filter(onSale);
     return `
-    ${pageHero(items[0].author, "Falaq Nashr katalogidagi asarlar", "Muallif kitoblari")}
+    ${pageHero(all[0].author, "Falaq Nashr katalogidagi asarlar", "Muallif kitoblari")}
     <section class="author-list">
+      ${items.length ? "" : `<p class="note">Hozircha bu muallifning sotuvdagi kitobi yo‘q.</p>`}
       ${items.map((b) => `<article class="author-book panel">
         <a href="#/kitob/${b.slug}"><img src="${cover(b)}" alt="${b.title} — muqova" loading="lazy"></a>
         <div>
@@ -415,8 +418,8 @@
   // Grid + pager for the current filters; redrawn on its own while typing in the search box.
   function shopResults(st) {
     const needle = st.q.trim().toLowerCase();
-    const list = products.products.filter((p) =>
-      (!st.cat || decode(p.category || OTHER) === st.cat) && (!needle || decode(p.title).toLowerCase().includes(needle)));
+    const list = products.products.filter((p) => p.inStock
+      && (!st.cat || decode(p.category || OTHER) === st.cat) && (!needle || decode(p.title).toLowerCase().includes(needle)));
     const pages = Math.ceil(list.length / PRODUCTS_PER_PAGE);
     const page = Math.min(Math.max(st.p, 1), Math.max(pages, 1));
     const items = list.slice((page - 1) * PRODUCTS_PER_PAGE, page * PRODUCTS_PER_PAGE);
@@ -448,7 +451,7 @@
       return `${pageHero("Uzum Marketdagi kitoblar", "Yuklanmoqda…")}`;
     }
     const sh = D.shop;
-    const list = products.products;
+    const list = products.products.filter((p) => p.inStock);
     if (!list.length) {
       return `${pageHero("Uzum Marketdagi kitoblar", "", "Onlayn do‘kon")}
       <section class="section section--tight"><p class="note"><a href="${L.uzum}" ${ext}>Kitoblarimizni Uzum Marketda ko‘ring ${arrow}</a></p></section>`;
@@ -476,7 +479,7 @@
   }
 
   function favorites() {
-    const items = D.books.filter((b) => favs.includes(b.slug));
+    const items = forSale.filter((b) => favs.includes(b.slug));
     if (!items.length) {
       return `<section class="empty panel">
         <span class="empty__icon">${heart(false)}</span>
@@ -545,8 +548,9 @@
 
   function updateFavCount() {
     const badge = document.getElementById("fav-count");
-    badge.textContent = favs.length;
-    badge.hidden = favs.length === 0;
+    const n = forSale.filter((b) => favs.includes(b.slug)).length;
+    badge.textContent = n;
+    badge.hidden = n === 0;
   }
 
   function closeMenus() {
