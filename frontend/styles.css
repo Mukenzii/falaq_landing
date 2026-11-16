@@ -32,6 +32,7 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 img { max-width: 100%; display: block; }
+[hidden] { display: none !important; } /* also for elements whose class sets a display */
 a { color: inherit; text-decoration: none; }
 h1, h2, h3 { color: var(--navy); margin: 0; font-weight: 600; letter-spacing: -0.03em; line-height: 1.12; text-wrap: balance; }
 h1 { font-size: clamp(2.1rem, 4.6vw, 3.6rem); }
@@ -175,7 +176,7 @@ p { margin: 0; }
 /* ---------- layout ---------- */
 .site-main { padding-inline: max(var(--gutter), 1vw); padding-block: 4px 40px; display: flex; flex-direction: column; gap: 0; }
 .site-main > * { width: 100%; max-width: 1440px; margin-inline: auto; }
-.section, .catalog, .book, .book-more, .contact, .about, .author-list, .crumbs {
+.section, .catalog, .book, .stores, .book-more, .contact, .about, .author-list, .crumbs {
   max-width: var(--wrap);
 }
 .section { padding-block: clamp(48px, 7vw, 96px) 0; }
@@ -308,6 +309,23 @@ p { margin: 0; }
 .faq dt { color: var(--navy); font-weight: 600; font-size: 1.12rem; margin-bottom: 8px; letter-spacing: -0.01em; }
 .faq dd { margin: 0; color: var(--muted); font-size: .92rem; }
 
+/* ---------- nearest bookshops (book page) ---------- */
+.stores { margin: clamp(48px, 7vw, 88px) auto 0; }
+.stores__head { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 12px; }
+.stores__head .eyebrow { margin-bottom: 12px; }
+.stores__status { color: var(--muted); font-size: .92rem; margin-bottom: 22px; }
+.stores .fine { margin-top: 16px; }
+.store { position: relative; display: flex; flex-direction: column; gap: 8px; padding: 24px; border-radius: var(--radius); }
+.store h3 { font-size: 1.15rem; font-weight: 500; letter-spacing: -0.01em; padding-right: 76px; }
+.store__addr { font-size: .92rem; }
+.store__dist {
+  position: absolute; top: 22px; right: 20px; padding: .5em .75em; border-radius: 999px;
+  background: var(--bg); color: var(--blue); font: 500 .72rem/1 var(--mono); letter-spacing: .04em;
+}
+.store__links { display: flex; flex-wrap: wrap; gap: 6px 18px; margin-top: auto; padding-top: 10px; font-size: .9rem; font-variant-numeric: tabular-nums; }
+.store__links a { color: var(--blue); font-weight: 500; }
+.store__links a:hover { text-decoration: underline; }
+
 /* ---------- author ---------- */
 .author-list { margin: 48px auto 0; display: flex; flex-direction: column; gap: 28px; max-width: 1080px; }
 .author-book { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: clamp(24px, 5vw, 64px); align-items: center; padding: clamp(24px, 3vw, 40px); }
@@ -417,7 +435,7 @@ a.pager__btn:hover { background: var(--surface); border-color: var(--blue); colo
 }
 @media (max-width: 560px) {
   .grid--4, .grid--3, .catalog .grid--3 { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
-  .grid--3.news-grid, .topics, .news-mini-grid { grid-template-columns: 1fr; }
+  .grid--3.news-grid, .topics, .news-mini-grid, .stores__list { grid-template-columns: 1fr; }
   .book-card__link { padding: 16px 10px 22px; }
   .book-card img { height: 160px; }
   .book-card__title { font-size: .95rem; }

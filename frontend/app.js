@@ -283,6 +283,7 @@
         </div>
       </div>
     </section>
+    ${storesSection(b)}
     <section class="book-more">
       <div>
         <h2>Kitob bilan tanishing</h2>
@@ -294,6 +295,87 @@
         <div><dt>Ulgurji buyurtma qanday beriladi?</dt><dd>${D.phones.join(" yoki ")} raqamlariga murojaat qiling.</dd></div>
       </dl>
     </section>`;
+  }
+
+  /* ---------- nearest bookshops (book page) ---------- */
+  // Shops come from data.js. The visitor's location is asked when a book page opens, kept for this
+  // visit only, and used in the browser to sort the shops by distance; it is never sent anywhere.
+  const storesFor = (slug) => (D.stores || []).filter((s) =>
+    Number.isFinite(s.lat) && Number.isFinite(s.lng) && (!Array.isArray(s.books) || s.books.includes(slug)));
+  let here = null; // { lat, lng } once the visitor allowed it
+
+  // Straight-line distance in metres (haversine).
+  function metres(a, b) {
+    const rad = (d) => (d * Math.PI) / 180;
+    const h = Math.sin(rad(b.lat - a.lat) / 2) ** 2
+      + Math.cos(rad(a.lat)) * Math.cos(rad(b.lat)) * Math.sin(rad(b.lng - a.lng) / 2) ** 2;
+    return 2 * 6371000 * Math.asin(Math.sqrt(h));
+  }
+  const distance = (m) => (m < 1000 ? `${Math.max(10, Math.round(m / 10) * 10)} m`
+    : `${(m / 1000).toFixed(m < 10000 ? 1 : 0).replace(".", ",")} km`);
+
+  function storesSection(b) {
+    if (!storesFor(b.slug).length) return "";
+    return `<section class="stores" id="stores" data-book="${b.slug}">
+      <div class="stores__head">
+        <div><p class="eyebrow">Kitob do‘konlari</p><h2>Sizga yaqin do‘konlar</h2></div>
+        <button class="btn btn--outline btn--sm" type="button" data-locate hidden>Joylashuvni aniqlash</button>
+      </div>
+      <p class="stores__status" role="status" aria-live="polite"></p>
+      <div class="stores__list grid grid--3"></div>
+      <p class="fine">Joylashuvingiz faqat shu brauzerda, do‘konlargacha masofani hisoblash uchun ishlatiladi.</p>
+    </section>`;
+  }
+
+  function storeCard(s, from) {
+    const map = `https://yandex.uz/maps/?pt=${s.lng},${s.lat}&z=16&l=map`;
+    const route = from && `https://yandex.uz/maps/?rtext=${from.lat},${from.lng}~${s.lat},${s.lng}&rtt=auto`;
+    return `<article class="store panel">
+      ${from ? `<span class="store__dist">${distance(metres(from, s))}</span>` : ""}
+      <h3>${s.name}</h3>
+      <p class="store__addr">${s.address}</p>
+      ${s.hours ? `<p class="muted small">${s.hours}</p>` : ""}
+      <div class="store__links">
+        ${s.phone ? `<a href="${tel(s.phone)}">${s.phone}</a>` : ""}
+        <a href="${route || map}" ${ext}>${route ? "Yo‘l ko‘rsatish" : "Xaritada ko‘rish"} ${arrow}</a>
+      </div>
+    </article>`;
+  }
+
+  // Nearest three when the location is known, otherwise the first three in data.js.
+  function showStores(section, from, note, retry = false) {
+    const list = storesFor(section.dataset.book);
+    const shown = from ? [...list].sort((a, z) => metres(from, a) - metres(from, z)) : list;
+    section.querySelector(".stores__list").innerHTML = shown.slice(0, 3).map((s) => storeCard(s, from)).join("");
+    section.querySelector(".stores__status").textContent = note;
+    section.querySelector("[data-locate]").hidden = !retry;
+  }
+
+  function locateStores() {
+    const section = document.getElementById("stores");
+    if (!section) return;
+    const NEAR = "Joylashuvingizga eng yaqin do‘konlar.";
+    if (here) return showStores(section, here, NEAR);
+    if (!navigator.geolocation || !window.isSecureContext) {
+      return showStores(section, null, "Brauzeringiz joylashuvni aniqlay olmaydi. Do‘konlarimiz:");
+    }
+    showStores(section, null, "Joylashuvingiz so‘ralmoqda… Ruxsat bersangiz, eng yaqin do‘konlarni ko‘rsatamiz.");
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        here = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+        // The visitor may have opened another page (or book) meanwhile: use what is on screen now.
+        const now = document.getElementById("stores");
+        if (now) showStores(now, here, NEAR);
+      },
+      (err) => {
+        const now = document.getElementById("stores");
+        if (!now) return;
+        showStores(now, null, err.code === err.PERMISSION_DENIED
+          ? "Joylashuvga ruxsat berilmadi. Brauzer sozlamalarida ruxsat bersangiz, eng yaqin do‘konlarni ko‘rsatamiz. Do‘konlarimiz:"
+          : "Joylashuvni aniqlab bo‘lmadi. Qayta urinib ko‘ring. Do‘konlarimiz:", true);
+      },
+      { enableHighAccuracy: false, timeout: 15000, maximumAge: 10 * 60 * 1000 },
+    );
   }
 
   function authorPage(slug) {
@@ -488,6 +570,7 @@
     });
     updateFavCount();
     closeMenus();
+    if (a === "kitob") locateStores(); // asks for the location once the book page is on screen
     // Paging or filtering within the same list keeps the list in view; other pages start at the top.
     const top = path === lastPath && document.querySelector(".list-top");
     if (top) top.scrollIntoView({ block: "start" });
@@ -528,6 +611,10 @@
         document.querySelectorAll(`[data-fav="${s}"]`).forEach((el) => (el.outerHTML = favButton(s)));
         updateFavCount();
       }
+      return;
+    }
+    if (e.target.closest("[data-locate]")) {
+      locateStores();
       return;
     }
     const ddBtn = e.target.closest("#books-dd > button");

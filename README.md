@@ -41,6 +41,14 @@ wrong product, set `uzumId` on the book in `data.js` to the right product id (th
 end of the uzum.uz link). Lists show only books in stock; a sold-out book keeps its own page.
 Until the first sync the site shows no prices.
 
+## Bookshops near the visitor
+
+A book page shows the 3 bookshops nearest to the visitor: the browser asks for their location
+(it stays in the browser and is used only to measure the distance), then the page lists the shops
+with distance, address, phone, hours and a route link (Yandex Maps). Without permission it lists
+the first three. Shops are the `stores` list in `frontend/data.js` (format described there); a shop
+with `books` shows only on those books' pages. With no shops the section is hidden.
+
 ## Contacts
 
 There is no contact form: the contact page and the footer show the phone numbers and Telegram.
