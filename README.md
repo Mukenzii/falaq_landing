@@ -1,73 +1,46 @@
 # Falaq Nashr website
 
-Publisher site with a catalog, news, Uzum Market prices, a contact form, and an admin panel.
+Publisher site with a catalog, news, Uzum Market prices and contacts. It is a static site:
+no backend, no database and no admin panel.
 
 ```
-browser ──► frontend (nginx :8080) ──/api──► backend (Node + Express :3000) ──► db (Postgres 16)
-              site + /admin/                     └─ headless Chromium → uzum.uz
+browser ──► nginx (frontend/)    index.html, app.js, styles.css, assets/
+                                 data.js   content, edited by hand
+                                 uzum.js   prices and stock, written by npm run sync:uzum
 ```
-
-| Service    | What it does                                                                 |
-|------------|------------------------------------------------------------------------------|
-| `frontend` | nginx: serves the site (`frontend/`) and admin panel (`frontend/admin/`), proxies `/api` |
-| `backend`  | REST API, admin auth, Uzum scraper (Playwright Chromium)                      |
-| `db`       | Postgres: books, news, settings, Uzum products, sync history, messages        |
-| `adminer`  | Optional DB browser on :8081 (`docker compose --profile tools up -d`)          |
 
 ## Run
 
 ```sh
-cp .env.example .env          # set ADMIN_PASSWORD and SESSION_SECRET
-docker compose up -d --build
+npm start                     # http://localhost:8080 (python3 -m http.server)
+# or, as on the server:
+docker compose up -d --build  # nginx with security headers on :8080 (PORT in .env)
 ```
 
-- Site: http://localhost:8080
-- Admin: http://localhost:8080/admin/ (password = `ADMIN_PASSWORD`)
+## Content
 
-On first start the backend creates the tables and loads the initial books, news and links from
-`backend/seed/data.js`. With `SYNC_ON_START=1` it also runs one Uzum sync.
+Edit `frontend/data.js`: links, phone numbers, categories, books and news. A book's cover is
+`frontend/assets/books/<slug>.jpg`; a news picture is a file in `frontend/assets/news/`.
+After an edit, reload the page (or rebuild the Docker image on the server).
 
-## Uzum Market sync
+## Uzum Market prices
 
-**With an API key (recommended):** put the key from seller.uzum.uz → API keys into `.env` as
-`UZUM_API_KEY` (and optionally `UZUM_SHOP_ID`), then `docker compose up -d`. The sync button then
-reads your products, prices and stock through the official Uzum Seller OpenAPI
-(`backend/src/uzum-seller.js`). Uzum's firewall may block requests from outside Uzbekistan; if the
-API fails, the sync falls back to reading the public shop page as described below.
+`npm run sync:uzum` reads the shop's products, prices and stock through the official Uzum Seller
+OpenAPI (`scripts/uzum-client.mjs`) and writes their public fields to `frontend/uzum.js`.
 
-**Without a key:**
+1. Put the key from seller.uzum.uz → Settings → API keys into `.env` as `UZUM_API_KEY`
+   (see `.env.example`). It stays on this machine and never reaches the site.
+2. Run `npm run sync:uzum` (`npm run sync:uzum:check` prints the result without writing).
+   Uzum's firewall answers only requests from Uzbekistan.
+3. Run it daily on the server, for example with cron:
+   `15 6 * * *  cd /path/to/falaq_landing && npm run sync:uzum`
+   (with Docker, rebuild after the sync so the image has the new `uzum.js`).
 
-In the admin panel, **Uzum → “Uzumdan yangilash”** runs `backend/src/uzum-scraper.js`:
+Each book is linked to the Uzum product whose title contains the book title. If it picks the
+wrong product, set `uzumId` on the book in `data.js` to the right product id (the number at the
+end of the uzum.uz link). Lists show only books in stock; a sold-out book keeps its own page.
+Until the first sync the site shows no prices.
 
-1. Opens `https://uzum.uz/uz/shop/<shop>` in headless Chromium and reuses the page's anonymous
-   GraphQL token.
-2. Pages through every product in the shop: title, price, old price, photos, rating, review
-   count, availability, delivery date and link.
-3. Stores them in `uzum_products`. Products that disappeared are hidden, not deleted.
-4. Links each book to a product by title (or keeps the product picked by hand in the book editor).
+## Contacts
 
-The shop name is set in **Sozlamalar**, `falaqnashr` by default. If the shop page lists no
-products, the sync falls back to an Uzum search (`falaq nashr`) and keeps only titles containing
-`falaq`. The admin page shows which source was used. Clear the search word to turn this off.
-
-Run the scraper outside Docker (uses your installed Chrome):
-
-```sh
-cd backend && npm install
-PLAYWRIGHT_CHANNEL=chrome node -e "import('./src/uzum-scraper.js').then(m => m.scrapeUzum({shop:'falaqnashr', fallbackQuery:'falaq nashr', fallbackMatch:'falaq', log:console.log})).then(r => console.log(r.source, r.products.length))"
-```
-
-## API
-
-Public: `GET /api/site`, `GET /api/products`, `POST /api/messages`, `GET /api/health`.
-Admin (cookie session): `/api/admin/login|logout|me`, `/api/admin/sync`, `/api/admin/products`,
-`/api/admin/books[/:id]`, `/api/admin/news[/:id]`, `/api/admin/messages[/:id]`, `/api/admin/settings`.
-
-## Useful commands
-
-```sh
-docker compose logs -f backend                         # API and sync logs
-docker compose exec db psql -U falaq falaq             # SQL shell
-docker compose down                                    # stop (data is kept in the db-data volume)
-docker compose down -v                                 # stop and delete the database
-```
+There is no contact form: the contact page and the footer show the phone numbers and Telegram.

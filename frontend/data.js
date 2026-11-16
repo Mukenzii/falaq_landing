@@ -1,13 +1,17 @@
-/* Initial site content: books, news, contacts and external links.
-   The backend loads this into the database on first start (src/seed.js); after that,
-   content is edited in the admin panel (/admin/). */
+/* Site content: books, news, contacts and external links. Edit this file to change the site.
+
+   Books: the cover is assets/books/<slug>.jpg. Price and stock come from Uzum Market through
+   `npm run sync:uzum` (uzum.js); a book is linked to the Uzum product whose title contains the
+   book title. If it picks the wrong product, set `uzumId` to the right Uzum product id (the
+   number at the end of the uzum.uz link).
+   News: `image` is a file in assets/news/. */
 
 window.FALAQ = {
   links: {
     telegram: "https://t.me/falaqnashr",
     instagram: "https://www.instagram.com/falaqnashr",
     youtube: "https://www.youtube.com/@FalaqNashrRasmiy",
-    uzum: "https://uzum.uz/uz/shop/falaqnashr",
+    uzum: "https://uzum.uz/uz/shop/falaq",
     // TODO: replace with the Telegram bot URL
     telegramBot: "https://t.me/falaqnashr",
     googlePlay: "https://play.google.com/store/search?q=falaq%20nashr&c=apps",

@@ -1,0 +1,12 @@
+{
+  "name": "falaq-landing",
+  "private": true,
+  "description": "Falaq Nashr website (static)",
+  "type": "module",
+  "engines": { "node": ">=18" },
+  "scripts": {
+    "start": "python3 -m http.server 8080 --directory frontend",
+    "sync:uzum": "node scripts/sync-uzum.mjs",
+    "sync:uzum:check": "node scripts/sync-uzum.mjs --dry-run"
+  }
+}

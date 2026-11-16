@@ -1,6 +1,7 @@
-/* Falaq Nashr website: a small single-page app with hash routing.
-   Content comes from the API (/api/site); prices and stock are synced from Uzum Market in the admin panel. */
-(async function () {
+/* Falaq Nashr website: a small single-page app with hash routing, served as static files.
+   Content comes from data.js (edited by hand); prices and stock from uzum.js, which
+   `npm run sync:uzum` writes from the Uzum Seller API. Both load before this script. */
+(function () {
   const $app = document.getElementById("app");
 
   // Every string is HTML-escaped once on load, so templates below can interpolate freely.
@@ -10,21 +11,22 @@
       : Array.isArray(v) ? v.map(escAll)
       : v && typeof v === "object" ? Object.fromEntries(Object.entries(v).map(([k, x]) => [k, escAll(x)]))
       : v;
-  const getJSON = async (url) => {
-    const r = await fetch(url, { headers: { Accept: "application/json" } });
-    if (!r.ok) throw new Error(`${url}: ${r.status}`);
-    return escAll(await r.json());
-  };
 
-  let D;
-  try {
-    D = await getJSON("/api/site");
-  } catch (e) {
-    $app.innerHTML = `<section class="empty panel"><h1>Sayt yuklanmadi</h1><p>Server bilan aloqa yo‘q. Sahifani birozdan so‘ng yangilang.</p></section>`;
+  if (!window.FALAQ) {
+    $app.innerHTML = `<section class="empty panel"><h1>Sayt yuklanmadi</h1><p>Sahifani birozdan so‘ng yangilang.</p></section>`;
     return;
   }
+  const D = escAll(window.FALAQ);
+  const U = escAll(window.UZUM || {}); // null until the first `npm run sync:uzum`
   const L = D.links;
-  let products = null; // Uzum shop page, loaded on first visit
+  // Covers are assets/books/<slug>.jpg; news pictures are named in data.js and live in assets/news/.
+  for (const b of D.books) b.cover = b.cover || `assets/books/${b.slug}.jpg`;
+  for (const n of D.news) if (n.image && !/[/:]/.test(n.image)) n.image = `assets/news/${n.image}`;
+  // Each book gets the Uzum product (price, stock, link) the sync linked to it.
+  const products = { products: U.products || [] };
+  const productById = new Map(products.products.map((p) => [p.id, p]));
+  for (const b of D.books) b.uzum = productById.get((U.books || {})[b.slug]) || null;
+  D.shop = U.shop || { url: L.uzum };
 
   /* ---------- helpers ---------- */
   const slugify = (s) =>
@@ -143,9 +145,8 @@
     const take = (key, html) => { used.add(key); cards.push(html); };
     for (const b of books) if (cards.length < count) take("b" + b.slug, bookCard(b));
     if (cards.length < count) {
-      if (!products) loadProducts(); // the home page redraws with shop products once they arrive
       const linked = new Set(D.books.map((b) => b.uzum && b.uzum.id));
-      for (const p of products ? products.products : []) {
+      for (const p of products.products) {
         if (cards.length < count && p.inStock && !linked.has(p.id) && !used.has("p" + p.id)) take("p" + p.id, productCard(p));
       }
     }
@@ -359,30 +360,6 @@
         <div><a class="btn" href="${L.uzum}" ${ext}>Uzum Marketga o‘tish ${arrow}</a></div>
       </div>
     </section>
-    <section class="form-wrap panel" id="yozish">
-      <div>
-        <p class="eyebrow eyebrow--blue">Murojaat</p>
-        <h2>Bizga yozing</h2>
-        <p class="muted">Ism va telefon raqamingizni qoldiring — mutaxassisimiz siz bilan bog‘lanadi.</p>
-      </div>
-      <form class="form" id="contact-form" novalidate>
-        <label>Ismingiz<input name="name" autocomplete="name" required maxlength="120"></label>
-        <label>Telefon<input name="phone" type="tel" autocomplete="tel" placeholder="+998 __ ___ __ __" required maxlength="40"></label>
-        <label>Mavzu
-          <select name="kind">
-            <option value="savol">Savol</option>
-            <option value="ulgurji">Ulgurji xarid</option>
-            <option value="hamkorlik">Hamkorlik</option>
-          </select>
-        </label>
-        <label class="form__full">Xabar<textarea name="text" rows="4" maxlength="2000"></textarea></label>
-        <input class="hp" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">
-        <div class="form__full form__foot">
-          <button class="btn" type="submit">Yuborish</button>
-          <p class="form__status" role="status" aria-live="polite"></p>
-        </div>
-      </form>
-    </section>
     <section class="socials panel">
       <a href="${L.telegram}" ${ext}><span>Telegram ${arrow}</span><small>@falaqnashr</small></a>
       <a href="${L.instagram}" ${ext}><span>Instagram ${arrow}</span><small>@falaqnashr</small></a>
@@ -428,28 +405,7 @@
       ${pager(page, pages, (n) => shopHref({ ...st, p: n }))}`;
   }
 
-  // Uzum shop products are loaded once, by the first page that needs them, which then redraws.
-  let productsLoading = false;
-  function loadProducts() {
-    if (products || productsLoading) return;
-    productsLoading = true;
-    getJSON("/api/products")
-      .then((d) => { products = d; })
-      .catch(() => { products = { products: [], failed: true }; })
-      .finally(() => {
-        productsLoading = false;
-        const hash = location.hash.replace(/^#\/?/, "");
-        // lastPath reset: this second render is the same visit, so it should not jump to the list.
-        if (hash.startsWith("dokon")) { lastPath = null; route(); }
-        else if (hash === "") $app.innerHTML = home(); // redraw rows in place, keeping the scroll position
-      });
-  }
-
   function shopPage(params) {
-    if (!products) {
-      loadProducts();
-      return `${pageHero("Uzum Marketdagi kitoblar", "Yuklanmoqda…")}`;
-    }
     const sh = D.shop;
     const list = products.products.filter((p) => p.inStock);
     if (!list.length) {
@@ -652,31 +608,6 @@
   document.addEventListener("change", (e) => {
     if (e.target.id !== "shop-cat") return;
     location.hash = shopHref({ cat: e.target.value, q: document.getElementById("shop-search").value, p: 1 });
-  });
-
-  document.addEventListener("submit", async (e) => {
-    if (e.target.id !== "contact-form") return;
-    e.preventDefault();
-    const form = e.target;
-    const status = form.querySelector(".form__status");
-    const btn = form.querySelector("button[type=submit]");
-    const body = Object.fromEntries(new FormData(form));
-    btn.disabled = true;
-    status.className = "form__status";
-    status.textContent = "Yuborilmoqda…";
-    try {
-      const r = await fetch("/api/messages", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
-      const d = await r.json().catch(() => ({}));
-      if (!r.ok) throw new Error(d.error || "Xatolik yuz berdi");
-      form.reset();
-      status.classList.add("is-ok");
-      status.textContent = "Rahmat! Xabaringiz qabul qilindi, tez orada bog‘lanamiz.";
-    } catch (err) {
-      status.classList.add("is-err");
-      status.textContent = err.message;
-    } finally {
-      btn.disabled = false;
-    }
   });
 
   document.getElementById("year").textContent = new Date().getFullYear();
