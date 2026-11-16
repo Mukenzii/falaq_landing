@@ -19,15 +19,6 @@ window.FALAQ = {
   },
   phones: ["+998 93 194 91 31", "+998 94 194 91 31"],
 
-  // Bookshops that sell Falaq books. A book page shows the 3 nearest to the visitor (the browser
-  // asks for their location; it is used only in the browser). With no shops the section is hidden.
-  //   lat, lng: the shop on the map; in Google Maps, right-click the shop and click the numbers.
-  //   books (optional): slugs of the books the shop has; without it the shop shows on every book.
-  //   phone, hours (optional).
-  // { name: "Kitob do‘koni", address: "Toshkent, Amir Temur ko‘chasi 1", lat: 41.3111, lng: 69.2797,
-  //   phone: "+998 90 000 00 00", hours: "Har kuni 09:00–21:00" },
-  stores: [],
-
   categories: [
     { slug: "badiiy", name: "Badiiy adabiyot", tagline: "Hikoyalar va unutilmas taqdirlar", cover: "1500-yillik-mahbuslar" },
     { slug: "marifiy", name: "Ma’rifiy adabiyot", tagline: "Mutolaa va mulohaza", cover: "sahobalardan-maktublar" },

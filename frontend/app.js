@@ -1,6 +1,7 @@
 /* Falaq Nashr website: a small single-page app with hash routing, served as static files.
    Content comes from data.js (edited by hand); prices and stock from uzum.js, which
-   `npm run sync:uzum` writes from the Uzum Seller API. Both load before this script. */
+   `npm run sync:uzum` writes from the Uzum Seller API; bookshops from stores.js, which
+   `npm run sync:stores` writes from the shop sheet. All load before this script. */
 (function () {
   const $app = document.getElementById("app");
 
@@ -27,6 +28,7 @@
   const productById = new Map(products.products.map((p) => [p.id, p]));
   for (const b of D.books) b.uzum = productById.get((U.books || {})[b.slug]) || null;
   D.shop = U.shop || { url: L.uzum };
+  const SHOPS = escAll(window.STORES || []); // null until the first `npm run sync:stores`
 
   /* ---------- helpers ---------- */
   const slugify = (s) =>
@@ -298,10 +300,10 @@
   }
 
   /* ---------- nearest bookshops (book page) ---------- */
-  // Shops come from data.js. The visitor's location is asked when a book page opens, kept for this
-  // visit only, and used in the browser to sort the shops by distance; it is never sent anywhere.
-  const storesFor = (slug) => (D.stores || []).filter((s) =>
-    Number.isFinite(s.lat) && Number.isFinite(s.lng) && (!Array.isArray(s.books) || s.books.includes(slug)));
+  // Shops come from stores.js (the shop sheet). The visitor's location is asked when a book page
+  // opens, kept for this visit only, and used in the browser to sort the shops by distance; it is
+  // never sent anywhere.
+  const storesFor = () => SHOPS.filter((s) => Number.isFinite(s.lat) && Number.isFinite(s.lng));
   let here = null; // { lat, lng } once the visitor allowed it
 
   // Straight-line distance in metres (haversine).
@@ -333,10 +335,10 @@
     return `<article class="store panel">
       ${from ? `<span class="store__dist">${distance(metres(from, s))}</span>` : ""}
       <h3>${s.name}</h3>
-      <p class="store__addr">${s.address}</p>
-      ${s.hours ? `<p class="muted small">${s.hours}</p>` : ""}
+      ${s.type ? `<p class="store__type">${s.type}</p>` : ""}
+      ${s.hours ? `<p class="muted small">Ish vaqti: ${s.hours}</p>` : ""}
       <div class="store__links">
-        ${s.phone ? `<a href="${tel(s.phone)}">${s.phone}</a>` : ""}
+        ${(s.phones || []).map((p) => `<a href="${tel(p)}">${p}</a>`).join("")}
         <a href="${route || map}" ${ext}>${route ? "Yo‘l ko‘rsatish" : "Xaritada ko‘rish"} ${arrow}</a>
       </div>
     </article>`;

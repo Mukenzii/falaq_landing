@@ -45,9 +45,17 @@ Until the first sync the site shows no prices.
 
 A book page shows the 3 bookshops nearest to the visitor: the browser asks for their location
 (it stays in the browser and is used only to measure the distance), then the page lists the shops
-with distance, address, phone, hours and a route link (Yandex Maps). Without permission it lists
-the first three. Shops are the `stores` list in `frontend/data.js` (format described there); a shop
-with `books` shows only on those books' pages. With no shops the section is hidden.
+with distance, type, hours, phones and a route link (Yandex Maps). Without permission it lists the
+first three. With no shops the section is hidden.
+
+The shops come from the "Do'kon lokatsiya" Google Sheet. `npm run sync:stores` downloads it
+(`SHEET_ID` in `.env`) and writes only the public columns (name, type, hours, phones, map
+position) to `frontend/stores.js`; agent and contact-person columns never reach the site.
+`npm run sync:stores:check` prints the result without writing. The "Lokatsiya" column may hold a
+Google Maps link (short maps.app.goo.gl links too) or coordinates; rows the script cannot place
+(a Yandex link or a plain address) are listed so they can be fixed in the sheet. Run it after
+editing the sheet, or with the Uzum sync from cron:
+`15 6 * * *  cd /path/to/falaq_landing && npm run sync:uzum; npm run sync:stores`
 
 ## Contacts
 

@@ -7,6 +7,8 @@
   "scripts": {
     "start": "python3 -m http.server 8080 --directory frontend",
     "sync:uzum": "node scripts/sync-uzum.mjs",
-    "sync:uzum:check": "node scripts/sync-uzum.mjs --dry-run"
+    "sync:uzum:check": "node scripts/sync-uzum.mjs --dry-run",
+    "sync:stores": "node scripts/sync-stores.mjs",
+    "sync:stores:check": "node scripts/sync-stores.mjs --dry-run"
   }
 }
