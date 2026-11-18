@@ -70,6 +70,68 @@ window.FALAQ = {
       slug: "ishonchli-xabar", title: "Ishonchli xabar", author: "Adham Sharqoviy", category: "marifiy",
       desc: "Hayotga qarash va uni tushunishga yordam beruvchi o‘nta maslahat. Kitob haqida nashriyotning rasmiy kanalida o‘qishingiz mumkin.",
     },
+    {
+      slug: "la-natlangan-qiz", title: "La’natlangan qiz", author: "Vafo Xasan", category: "badiiy",
+      desc: "Qadimiy arab shaharlaridan birida ro‘y bergan, avloddan avlodga o‘tib afsonaga aylangan voqea. Ochiq bozorlar, shovqinli kunduzlar va sokin kechalar orasida burilishlarga boy qissa.",
+    },
+    {
+      slug: "shaxmat-ustidagi-qotillik", title: "Shaxmat ustidagi qotillik", author: "Foyiz Qaroshiy", category: "badiiy",
+      desc: "Xususiy izquvarga o‘limga hukm qilingan mahbus qo‘ng‘iroq qiladi: u oqsoch ayolning qotilligida ayblanmoqda va ishini izquvar tekshirishini istaydi. Sirli detektiv asar.",
+    },
+    {
+      slug: "darbadar", title: "Darbadar", author: "Muhammad Yusuf G‘arboviy", category: "badiiy",
+      desc: "Qorong‘u tunda kimsasiz sahro bo‘ylab tog‘dagi g‘orga yetib kelgan charchoq yo‘lovchi. Qo‘rquv va jarohatga to‘la qalbning yo‘l izlashi haqidagi asar.",
+    },
+    {
+      slug: "assasin", title: "Assasin", author: "Mahmud Amin", category: "badiiy",
+      desc: "Voqealar Fors shimolidagi Alamut qal’asi yaqinidagi qishloqda boshlanadi, ildizlari esa Shimoliy Afrikaga, Ismoiliylar da’vati paydo bo‘lgan joyga borib taqaladi.",
+    },
+    {
+      slug: "oqshom-gozalliklari", title: "Oqshom go‘zalliklari", author: "Hasson Shamsiy Posho", category: "marifiy",
+      desc: "Oila jam bo‘lib, qalblar Yaratuvchiga talpinadigan oqshomlar haqida. Imom Molik va shogirdlari kabi salaflar hayotidan ibratli rivoyatlar.",
+    },
+    {
+      slug: "metin-qoyalar", title: "Metin qoyalar", author: "Hasson Shamsiy Posho", category: "marifiy",
+      desc: "Qoyalar yemirilish va nurashlarga bardosh bergani uchun tik turadi. Sinovli dunyoda ikki olam yutug‘iga intilayotgan inson ham shunday metin bo‘lishi haqida.",
+    },
+    {
+      slug: "qur-on-qalbiga-safar", title: "Qur’on qalbiga safar", author: "Yosin Pishgin", category: "marifiy",
+      desc: "Qur’oni karimni tafakkur bilan o‘qishga va oyatlarni qalbga yaqinlashtirishga chorlovchi ma’rifiy kitob.",
+    },
+    {
+      slug: "rasulullohdan-maktublar", title: "Rasulullohdan maktublar", author: "Adham Sharqoviy", category: "marifiy",
+      desc: "Rasululloh sollallohu alayhi vasallamni yaxshi ko‘radiganlarga bag‘ishlangan maktublar. Nafs bilan kurashda noumid bo‘lmaslik va u zotning shafoatiga yetishish yo‘lida sobitqadam bo‘lish haqida.",
+    },
+    {
+      slug: "alloh-sari-20-bekat", title: "Alloh sari 20 bekat", author: "Usoma Minshaviy", category: "marifiy",
+      desc: "Bir oyat muallifni Robbisi bilan aloqasini qayta ko‘rib chiqishga undadi: Allohni qanchalik taniyman, Unga yetishishimga nima xalaqit beryapti? Shu savollarga javob izlagan yigirma bekat.",
+    },
+    {
+      slug: "habibimiz-oramizda-bolsalar", title: "Habibimiz oramizda bo‘lsalar", author: "Ahmad Shuqayriy", category: "marifiy",
+      desc: "Payg‘ambarimiz sollallohu alayhi vasallam bugun oramizda bo‘lganlarida, muammolarimizga qanday yechim topgan bo‘lardilar? Muallif javoblarni u zotning siyratlaridan izlaydi.",
+    },
+    {
+      slug: "yosh-qizga-nasihat", title: "Yosh qizga nasihat", author: "Hasson Shamsiy Posho", category: "oila",
+      desc: "Yosh qizlarga qalbdan aytilgan nasihatlar, «Yosh yigitga nasihat» kitobining egizagi. Nashriyot uning lotin yozuvidagi nashrini ham e’lon qilgan.",
+      news: "sevimli-kitoblar",
+    },
+    {
+      slug: "yosh-yigitga-nasihat", title: "Yosh yigitga nasihat", author: "Hasson Shamsiy Posho", category: "oila",
+      desc: "Qalbdan chiqib, qalblarga yetib boruvchi nasihatlar. Muallif so‘zboshida kitobning o‘ninchi nashri taqdim etilayotganini, oldingi nashrlar to‘liq tarqalganini aytadi.",
+    },
+    {
+      slug: "er-xotinga-nasihat", title: "Er-xotinga nasihat", author: "Hasson Shamsiy Posho", category: "oila",
+      desc: "Oilaviy kelishmovchiliklar, ajrimlar va ularning farzandlarga ta’siri haqida. Hayotiy hikoyalar orqali er-xotin munosabatlarini mustahkamlashga chorlovchi kitob.",
+    },
+    {
+      slug: "qulogim-senda-qizim", title: "Qulog‘im senda, qizim!", author: "Abdulloh Muhammad Abdulmu’ti", category: "oila",
+      desc: "Qizlarni qiynaydigan savollarga javob: Alloh g‘am-tashvishlarni nega yaratgan, musibatlar ortida qanday hikmat bor? Nashriyot uning lotin yozuvidagi nashrini ham e’lon qilgan.",
+      news: "sevimli-kitoblar",
+    },
+    {
+      slug: "jannat-bostonidagi-oilaviy-oqshomlar", title: "Jannat bo‘stonidagi oilaviy oqshomlar", author: "Hasson Shamsiy Posho", category: "oila",
+      desc: "Baxt-saodat va jannat umidida bo‘lgan, har kecha besh daqiqa bo‘lsa ham birga ilm olishni istagan oilalarga bag‘ishlangan kitob.",
+    },
   ],
 
   news: [

@@ -39,7 +39,10 @@ OpenAPI (`scripts/uzum-client.mjs`) and writes their public fields to `frontend/
 Each book is linked to the Uzum product whose title contains the book title. If it picks the
 wrong product, set `uzumId` on the book in `data.js` to the right product id (the number at the
 end of the uzum.uz link). Lists show only books in stock; a sold-out book keeps its own page.
-Until the first sync the site shows no prices.
+
+**Until the first sync, `frontend/uzum.js` holds temporary sample data**: made-up prices, every
+book in stock, links to the shop page. It is there so the catalogue can be previewed. Run
+`npm run sync:uzum` before the site goes live; it overwrites the file with the real data.
 
 ## Bookshops near the visitor
 
